@@ -1522,8 +1522,8 @@
 
                 // DEP/WDL 彩色交易方向徽章
                 const typeBadge = item.direction === 'Deposit'
-                    ? `<span class="text-blue-700 bg-blue-100 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fa-solid fa-arrow-down-long"></i> 存款 (DEP)</span>`
-                    : `<span class="text-purple-700 bg-purple-100 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fa-solid fa-arrow-up-long"></i> 提款 (WDL)</span>`;
+                    ? `<span class="text-blue-700 bg-blue-100 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fa-solid fa-arrow-down-long"></i> Deposit</span>`
+                    : `<span class="text-purple-700 bg-purple-100 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fa-solid fa-arrow-up-long"></i> Withdrawal</span>`;
 
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 transition-colors text-xs font-mono';
@@ -1599,7 +1599,7 @@
                 else itemStatus = 'FAILED';
 
                 const safeTxId = `'${pseudoTxId}`;
-                const safeDirection = item.direction === 'Deposit' ? '存款 (DEP)' : '提款 (WDL)';
+                const safeDirection = item.direction === 'Deposit' ? 'Deposit' : 'Withdrawal';
                 csvContent += `"${item.date}","${safeTxId}","${item.site}","${safeDirection}","${item.groupName}","${item.sysId}","${item.gateway}","${item.type}",${item.successAmount},"${item.currency}",${item.fee},"${itemStatus}"\n`;
             });
 
