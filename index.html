@@ -848,6 +848,7 @@
                                         <th class="p-3 text-center">Currency</th>
                                         <th class="p-3 text-right">Fee (Est.)</th>
                                         <th class="p-3 text-center">Status</th>
+                                        <th class="p-3 text-center">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100" id="report-table-body">
@@ -1474,9 +1475,34 @@
                     <td class="p-3 text-center font-bold text-slate-600">${item.currency}</td>
                     <td class="p-3 text-right text-rose-600">$${item.fee.toLocaleString()}</td>
                     <td class="p-3 text-center">${statusBadge}</td>
+                    <td class="p-3 text-center font-sans">
+                        <div class="flex items-center justify-center gap-1.5">
+                            ${itemStatus !== 'SUCCESS' ? `<button onclick="approveTransaction('${pseudoTxId}')" class="text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-1 rounded text-[10px] font-bold transition-all" title="Manually approve this transaction"><i class="fa-solid fa-check"></i> Approve</button>` : ''}
+                            <button onclick="resendTransactionToB2C('${pseudoTxId}')" class="text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-1 rounded text-[10px] font-bold transition-all" title="Resend transaction result to the B2C platform"><i class="fa-solid fa-paper-plane"></i> Resend</button>
+                        </div>
+                    </td>
                 `;
                 reportTableBody.appendChild(tr);
             });
+        }
+
+        // 手動核准單筆交易：強制設為 SUCCESS，供人工處理 PENDING / FAILED / REJECTED 交易
+        function approveTransaction(txId) {
+            const item = merchantReportData.find(i => getTransactionId(i) === txId);
+            if (!item) return;
+            item.isRejected = false;
+            item.status = 'Completed';
+            item.successCount = 1;
+            item.failedCount = 0;
+            changeReportPage();
+            alertSimulator(`✅ 交易 [${txId}] 已手動核准，狀態更新為 SUCCESS`);
+        }
+
+        // 重送交易結果通知給 B2C 平台端（模擬重新觸發 callback）
+        function resendTransactionToB2C(txId) {
+            const item = merchantReportData.find(i => getTransactionId(i) === txId);
+            if (!item) return;
+            alertSimulator(`📡 已重新推送交易 [${txId}] 結果至 [${item.site}] 平台 (Callback: 200 OK)`);
         }
 
         // CSV 資料導出
