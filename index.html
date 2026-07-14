@@ -873,10 +873,10 @@
 
         // === 1. 全局輔助與財務換算函數 (移至最上層以防 ReferenceError) ===
 
-        // 交易單號自動生成：存款前綴為 DP，提款前綴為 WP
+        // 交易單號自動生成：存款前綴為 DP，提款前綴為 WP，例如 DP16907796
         function getTransactionId(item) {
             const prefix = (item.direction === 'Withdrawal') ? 'WP' : 'DP';
-            const numericPart = item.date.replace(/[- :]/g, '').slice(2, 14) + "_" + item.sysId.slice(-3);
+            const numericPart = item.date.replace(/[^0-9]/g, '').slice(6);
             return prefix + numericPart;
         }
 
