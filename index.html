@@ -313,13 +313,13 @@
                             <table class="w-full text-left text-sm">
                                 <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
                                     <tr>
-                                        <th class="p-4 w-44">商戶編號</th>
-                                        <th class="p-4">所屬網關</th>
-                                        <th class="p-4">幣別</th>
-                                        <th class="p-4">商戶餘額</th>
-                                        <th class="p-4 text-center w-36">三方帳戶資訊</th>
-                                        <th class="p-4 text-center w-32">狀態</th>
-                                        <th class="p-4 text-center w-32">操作</th>
+                                        <th class="p-4 w-44">Merchant ID</th>
+                                        <th class="p-4">Gateway</th>
+                                        <th class="p-4">Currency</th>
+                                        <th class="p-4">Balance</th>
+                                        <th class="p-4 text-center w-36">3rd-Party Account</th>
+                                        <th class="p-4 text-center w-32">Status</th>
+                                        <th class="p-4 text-center w-32">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100" id="merchant-table-body">
@@ -363,13 +363,16 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1.5">渠道類型</label>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">Channel Type</label>
                                 <select id="filter-chan-type" class="w-full border border-slate-300 rounded-lg p-2.5 text-xs bg-white outline-none h-[38px]">
-                                    <option value="All" selected>全部</option>
-                                    <option value="OnlineBanking">OnlineBanking (網銀)</option>
-                                    <option value="MobilePayment">MobilePayment (行動支付)</option>
-                                    <option value="LoadCard">LoadCard (儲值卡)</option>
-                                    <option value="ChatTransfer">ChatTransfer (協定出款)</option>
+                                    <option value="All" selected>All</option>
+                                    <option value="OnlineBanking">OnlineBanking</option>
+                                    <option value="BankQr">BankQr</option>
+                                    <option value="EWallet">EWallet</option>
+                                    <option value="Crypto">Crypto</option>
+                                    <option value="TopupCard">TopupCard</option>
+                                    <option value="FPX">FPX</option>
+                                    <option value="CardTransfer">CardTransfer</option>
                                 </select>
                             </div>
                             <div>
@@ -393,18 +396,18 @@
                             <table class="w-full text-left text-xs whitespace-nowrap">
                                 <thead class="bg-slate-100 border-b border-slate-200 text-slate-600 font-bold">
                                     <tr>
-                                        <th class="p-3 text-center w-20">操作</th>
-                                        <th class="p-3 text-center w-16">狀態</th>
-                                        <th class="p-3">交易方向</th>
-                                        <th class="p-3">所屬網關</th>
-                                        <th class="p-3 text-blue-800 bg-blue-50/50 font-bold">商戶編號</th>
-                                        <th class="p-3">渠道類型</th>
-                                        <th class="p-3 text-brand-800 bg-brand-50/50 font-bold">分配適用站點</th>
-                                        <th class="p-3 text-center font-bold">幣別</th>
-                                        <th class="p-3 text-right font-bold">最低限制</th>
-                                        <th class="p-3 text-right font-bold">最高限制</th>
-                                        <th class="p-3 text-right font-bold">費率 (%)</th>
-                                        <th class="p-3 text-right font-bold">單筆固定費</th>
+                                        <th class="p-3 text-center w-20">Action</th>
+                                        <th class="p-3 text-center w-16">Status</th>
+                                        <th class="p-3">Direction</th>
+                                        <th class="p-3">Gateway</th>
+                                        <th class="p-3 text-blue-800 bg-blue-50/50 font-bold">Merchant ID</th>
+                                        <th class="p-3">Channel Type</th>
+                                        <th class="p-3 text-brand-800 bg-brand-50/50 font-bold">Assigned Sites</th>
+                                        <th class="p-3 text-center font-bold">Currency</th>
+                                        <th class="p-3 text-right font-bold">Min Limit</th>
+                                        <th class="p-3 text-right font-bold">Max Limit</th>
+                                        <th class="p-3 text-right font-bold">Fee (%)</th>
+                                        <th class="p-3 text-right font-bold">Fixed Fee</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100" id="channel-table-body">
@@ -490,12 +493,16 @@
 
                                     <!-- 篩選與排序控制 -->
                                     <div class="flex items-center gap-2" id="filter-sort-controls">
-                                        <div class="flex bg-slate-100 p-0.5 rounded-lg border text-[11px]" id="assigned-type-filters">
-                                            <button onclick="filterAssignedTable('All')" id="btn-filter-all" class="px-2.5 py-1 rounded-md bg-white text-slate-800 font-bold shadow-sm">全部</button>
-                                            <button onclick="filterAssignedTable('OnlineBanking')" id="btn-filter-ob" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-800">網銀</button>
-                                            <button onclick="filterAssignedTable('MobilePayment')" id="btn-filter-mp" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-800">行動</button>
-                                            <button onclick="filterAssignedTable('LoadCard')" id="btn-filter-lc" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-800">儲值卡</button>
-                                        </div>
+                                        <select id="assigned-type-filter-select" onchange="filterAssignedTable(this.value)" class="border bg-white text-[11px] font-bold px-2 py-1 rounded-lg text-slate-700 outline-none" title="Filter by Type">
+                                            <option value="All">All Types</option>
+                                            <option value="OnlineBanking">OnlineBanking</option>
+                                            <option value="BankQr">BankQr</option>
+                                            <option value="EWallet">EWallet</option>
+                                            <option value="Crypto">Crypto</option>
+                                            <option value="TopupCard">TopupCard</option>
+                                            <option value="FPX">FPX</option>
+                                            <option value="CardTransfer">CardTransfer</option>
+                                        </select>
                                         <button onclick="toggleAssignedSort()" class="border bg-white hover:bg-slate-50 text-[11px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 text-slate-700">
                                             <i class="fa-solid fa-sort"></i> <span id="sort-btn-label">按類型排序</span>
                                         </button>
@@ -506,8 +513,8 @@
                                     <table class="w-full text-left text-xs whitespace-nowrap">
                                         <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
                                             <tr id="assigned-table-header">
-                                                <th class="p-3">渠道名稱 / 類型</th>
-                                                <th class="p-3 text-center w-16">操作</th>
+                                                <th class="p-3">Channel / Type</th>
+                                                <th class="p-3 text-center w-16">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-slate-100" id="assigned-channels-table-body">
@@ -521,12 +528,16 @@
                                 <h4 class="text-xs font-bold text-slate-700"><i class="fa-solid fa-right-from-bracket text-brand-600 rotate-90 mr-1"></i> 從預設選項池中指派挪用渠道</h4>
                                 <div class="flex gap-3 items-end">
                                     <div class="w-48">
-                                        <label class="block text-[10px] text-slate-400 font-bold mb-1">過濾渠道類型</label>
+                                        <label class="block text-[10px] text-slate-400 font-bold mb-1">Filter by Type</label>
                                         <select id="rule-add-type-filter" onchange="filterAvailableChannelsDropdown()" class="w-full border border-slate-300 rounded-lg p-2 text-xs bg-white focus:ring-1 outline-none">
-                                            <option value="All" selected>全部類型</option>
+                                            <option value="All" selected>All Types</option>
                                             <option value="OnlineBanking">OnlineBanking</option>
-                                            <option value="MobilePayment">MobilePayment</option>
-                                            <option value="LoadCard">LoadCard</option>
+                                            <option value="BankQr">BankQr</option>
+                                            <option value="EWallet">EWallet</option>
+                                            <option value="Crypto">Crypto</option>
+                                            <option value="TopupCard">TopupCard</option>
+                                            <option value="FPX">FPX</option>
+                                            <option value="CardTransfer">CardTransfer</option>
                                         </select>
                                     </div>
                                     <div class="flex-grow flex-1">
@@ -646,9 +657,9 @@
                                         <table class="w-full text-left text-xs">
                                             <thead class="bg-slate-100 border-b border-slate-200 text-slate-600 font-bold">
                                                 <tr>
-                                                    <th class="p-3">平台標籤 (B2C Tag)</th>
-                                                    <th class="p-3">➔ 映射 3.0 群組代碼</th>
-                                                    <th class="p-3 text-center w-24">操作</th>
+                                                    <th class="p-3">Platform Tag (B2C Tag)</th>
+                                                    <th class="p-3">➔ Mapped 3.0 Group Code</th>
+                                                    <th class="p-3 text-center w-24">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="tag-bindings-tbody" class="divide-y divide-slate-200 text-slate-700 font-mono">
@@ -780,13 +791,16 @@
                             </select>
                         </div>
                         <div class="w-36">
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5">渠道類型 (Type)</label>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Channel Type</label>
                             <select id="report-type" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
-                                <option value="All">全部類型</option>
-                                <option value="OnlineBanking">OnlineBanking (網銀)</option>
-                                <option value="MobilePayment">MobilePayment (行動)</option>
-                                <option value="LoadCard">LoadCard (儲值卡)</option>
-                                <option value="ChatTransfer">ChatTransfer (協定出款)</option>
+                                <option value="All">All Types</option>
+                                <option value="OnlineBanking">OnlineBanking</option>
+                                <option value="BankQr">BankQr</option>
+                                <option value="EWallet">EWallet</option>
+                                <option value="Crypto">Crypto</option>
+                                <option value="TopupCard">TopupCard</option>
+                                <option value="FPX">FPX</option>
+                                <option value="CardTransfer">CardTransfer</option>
                             </select>
                         </div>
                         <div class="w-36">
@@ -823,17 +837,17 @@
                             <table class="w-full text-left text-sm whitespace-nowrap">
                                 <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
                                     <tr>
-                                        <th class="p-3">交易時間</th>
-                                        <th class="p-3">系統交易單號 (System Tx ID)</th>
-                                        <th class="p-3">來源站點</th>
-                                        <th class="p-3 text-center">交易類型</th>
-                                        <th class="p-3">實際商戶編號</th>
-                                        <th class="p-3">網關</th>
-                                        <th class="p-3">渠道類型</th>
-                                        <th class="p-3 text-right">金額</th>
-                                        <th class="p-3 text-center">幣別</th>
-                                        <th class="p-3 text-right">手續費 (預估)</th>
-                                        <th class="p-3 text-center">狀態</th>
+                                        <th class="p-3">Date/Time</th>
+                                        <th class="p-3">System Tx ID</th>
+                                        <th class="p-3">Site</th>
+                                        <th class="p-3 text-center">Type</th>
+                                        <th class="p-3">Merchant ID</th>
+                                        <th class="p-3">Gateway</th>
+                                        <th class="p-3">Channel Type</th>
+                                        <th class="p-3 text-right">Amount</th>
+                                        <th class="p-3 text-center">Currency</th>
+                                        <th class="p-3 text-right">Fee (Est.)</th>
+                                        <th class="p-3 text-center">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100" id="report-table-body">
@@ -920,14 +934,14 @@
             { id: 1, method: 'Deposit', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', group: 'Online Banking', type: 'OnlineBanking', currency: 'MYR', min: 10, max: 5000, chargeFee: 1.20, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
             { id: 2, method: 'Deposit', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', group: 'Online Banking', type: 'OnlineBanking', currency: 'THB', min: 50, max: 20000, chargeFee: 1.50, perCount: 1.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
             { id: 3, method: 'Deposit', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', group: 'Online Banking', type: 'OnlineBanking', currency: 'IDR', min: 20000, max: 500000, chargeFee: 1.10, perCount: 0.00, status: true, defaultSites: ['12bet', 'Bwing'] },
-            { id: 4, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', group: 'PhonePe', type: 'MobilePayment', currency: 'INR', min: 100, max: 50000, chargeFee: 2.00, perCount: 5.00, status: true, defaultSites: ['Nova'] },
-            { id: 5, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', group: 'GoPay', type: 'MobilePayment', currency: 'IDR', min: 50000, max: 1000000, chargeFee: 1.80, perCount: 10.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
-            { id: 6, method: 'Deposit', gateway: 'PayHelper', sysMerchant: 'SYS_MER_002', group: 'LoadCard', type: 'LoadCard', currency: 'THB', min: 100, max: 5000, chargeFee: 3.50, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
-            { id: 7, method: 'Withdrawal', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', group: 'BankTransfer', type: 'ChatTransfer', currency: 'MYR', min: 100, max: 100000, chargeFee: 0.00, perCount: 15.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
-            { id: 8, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', group: 'PromptPay', type: 'MobilePayment', currency: 'THB', min: 20, max: 15000, chargeFee: 1.10, perCount: 0.50, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
-            { id: 9, method: 'Deposit', gateway: 'PayHelper', sysMerchant: 'SYS_MER_002', group: 'TrueMoney', type: 'MobilePayment', currency: 'THB', min: 50, max: 8000, chargeFee: 1.30, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
+            { id: 4, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', group: 'PhonePe', type: 'EWallet', currency: 'INR', min: 100, max: 50000, chargeFee: 2.00, perCount: 5.00, status: true, defaultSites: ['Nova'] },
+            { id: 5, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', group: 'GoPay', type: 'EWallet', currency: 'IDR', min: 50000, max: 1000000, chargeFee: 1.80, perCount: 10.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
+            { id: 6, method: 'Deposit', gateway: 'PayHelper', sysMerchant: 'SYS_MER_002', group: 'TopupCard', type: 'TopupCard', currency: 'THB', min: 100, max: 5000, chargeFee: 3.50, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
+            { id: 7, method: 'Withdrawal', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', group: 'BankTransfer', type: 'CardTransfer', currency: 'MYR', min: 100, max: 100000, chargeFee: 0.00, perCount: 15.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
+            { id: 8, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', group: 'PromptPay', type: 'EWallet', currency: 'THB', min: 20, max: 15000, chargeFee: 1.10, perCount: 0.50, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
+            { id: 9, method: 'Deposit', gateway: 'PayHelper', sysMerchant: 'SYS_MER_002', group: 'TrueMoney', type: 'EWallet', currency: 'THB', min: 50, max: 8000, chargeFee: 1.30, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
             { id: 10, method: 'Deposit', gateway: 'AsiaTrust', sysMerchant: 'SYS_MER_004', group: 'FastBank', type: 'OnlineBanking', currency: 'THB', min: 500, max: 100000, chargeFee: 0.90, perCount: 2.00, status: true, defaultSites: ['12bet', 'Bwing'] },
-            { id: 11, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', group: 'TrueMoney', type: 'MobilePayment', currency: 'THB', min: 30, max: 10000, chargeFee: 1.25, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] }
+            { id: 11, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', group: 'TrueMoney', type: 'EWallet', currency: 'THB', min: 30, max: 10000, chargeFee: 1.25, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] }
         ];
 
         let ruleGroups = [
@@ -966,19 +980,19 @@
         // 模擬商戶交易明細總帳數據庫 (15 筆明細，完全防截斷且保留 Page 1、Page 2、成敗退款及 Deposit / Withdrawal 方向驗證)
         let merchantReportData = [
             { date: '2026-06-28 10:30:22', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', currency: 'THB', successAmount: 3500, fee: 52.5, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', direction: 'Deposit' },
-            { date: '2026-06-28 09:12:44', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'MobilePayment', currency: 'MYR', successAmount: 450, fee: 9.0, successCount: 1, failedCount: 0, status: 'Pending', site: '12bet', groupName: '大額深夜防刷組', direction: 'Deposit' },
-            { date: '2026-06-28 02:45:18', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'MobilePayment', currency: 'THB', successAmount: 0, fee: 0, successCount: 0, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', isRejected: true, direction: 'Deposit' },
-            { date: '2026-06-27 23:55:12', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'MobilePayment', currency: 'THB', successAmount: 1500, fee: 16.5, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: '新玩家群', direction: 'Deposit' },
+            { date: '2026-06-28 09:12:44', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', currency: 'MYR', successAmount: 450, fee: 9.0, successCount: 1, failedCount: 0, status: 'Pending', site: '12bet', groupName: '大額深夜防刷組', direction: 'Deposit' },
+            { date: '2026-06-28 02:45:18', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'EWallet', currency: 'THB', successAmount: 0, fee: 0, successCount: 0, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', isRejected: true, direction: 'Deposit' },
+            { date: '2026-06-27 23:55:12', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', currency: 'THB', successAmount: 1500, fee: 16.5, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: '新玩家群', direction: 'Deposit' },
             { date: '2026-06-27 21:14:05', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', currency: 'IDR', successAmount: 15000000, fee: 165000, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', direction: 'Deposit' },
-            { date: '2026-06-27 18:44:30', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'LoadCard', currency: 'THB', successAmount: 500, fee: 17.5, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', direction: 'Deposit' },
+            { date: '2026-06-27 18:44:30', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'TopupCard', currency: 'THB', successAmount: 500, fee: 17.5, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', direction: 'Deposit' },
             { date: '2026-06-27 15:30:22', sysId: 'SYS_MER_004', gateway: 'AsiaTrust', type: 'OnlineBanking', currency: 'USD', successAmount: 2500, fee: 22.5, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: 'Master Pool', direction: 'Deposit' },
-            { date: '2026-06-27 11:22:10', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'MobilePayment', currency: 'MYR', successAmount: 900, fee: 18.0, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: 'Master Pool', direction: 'Deposit' },
-            { date: '2026-06-27 09:05:14', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'MobilePayment', currency: 'IDR', successAmount: 800000, fee: 14400, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', direction: 'Deposit' },
+            { date: '2026-06-27 11:22:10', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', currency: 'MYR', successAmount: 900, fee: 18.0, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: 'Master Pool', direction: 'Deposit' },
+            { date: '2026-06-27 09:05:14', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', currency: 'IDR', successAmount: 800000, fee: 14400, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', direction: 'Deposit' },
             { date: '2026-06-27 01:20:30', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', currency: 'THB', successAmount: 0, fee: 0, successCount: 0, failedCount: 0, status: 'Completed', site: '12bet', groupName: '大額深夜防刷組', isRejected: true, direction: 'Deposit' },
-            { date: '2026-06-26 23:14:02', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'LoadCard', currency: 'THB', successAmount: 1000, fee: 35.0, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', direction: 'Deposit' },
+            { date: '2026-06-26 23:14:02', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'TopupCard', currency: 'THB', successAmount: 1000, fee: 35.0, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', direction: 'Deposit' },
             { date: '2026-06-26 21:04:18', sysId: 'SYS_MER_004', gateway: 'AsiaTrust', type: 'OnlineBanking', currency: 'USD', successAmount: 12000, fee: 108, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: 'Master Pool', direction: 'Deposit' },
-            { date: '2026-06-26 19:45:30', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'MobilePayment', currency: 'MYR', successAmount: 3200, fee: 15, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: '提款安全組', direction: 'Withdrawal' },
-            { date: '2026-06-26 16:30:12', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'ChatTransfer', currency: 'MYR', successAmount: 8500, fee: 15, successCount: 0, failedCount: 0, status: 'Pending', site: 'Nova', groupName: '提款安全組', direction: 'Withdrawal' },
+            { date: '2026-06-26 19:45:30', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', currency: 'MYR', successAmount: 3200, fee: 15, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: '提款安全組', direction: 'Withdrawal' },
+            { date: '2026-06-26 16:30:12', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'CardTransfer', currency: 'MYR', successAmount: 8500, fee: 15, successCount: 0, failedCount: 0, status: 'Pending', site: 'Nova', groupName: '提款安全組', direction: 'Withdrawal' },
             { date: '2026-06-26 14:12:05', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', currency: 'IDR', successAmount: 45000000, fee: 495000, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '印尼盾高頻老客組', direction: 'Deposit' }
         ];
 
@@ -1662,9 +1676,9 @@
             const tableHeader = document.getElementById('assigned-table-header');
             if (tableHeader) {
                 tableHeader.innerHTML = `
-                    <th class="p-3">渠道名稱 / 類型</th>
-                    <th class="p-3 text-right">預設最低限額 (Min)</th>
-                    <th class="p-3 text-right">預設最高限額 (Max)</th>
+                    <th class="p-3">Channel / Type</th>
+                    <th class="p-3 text-right">Default Min</th>
+                    <th class="p-3 text-right">Default Max</th>
                 `;
             }
 
@@ -1724,8 +1738,8 @@
             const tableHeader = document.getElementById('assigned-table-header');
             if (tableHeader) {
                 tableHeader.innerHTML = `
-                    <th class="p-3">渠道名稱 / 類型</th>
-                    <th class="p-3 text-center w-24">操作</th>
+                    <th class="p-3">Channel / Type</th>
+                    <th class="p-3 text-center w-24">Action</th>
                 `;
             }
 
@@ -1907,12 +1921,6 @@
 
         function filterAssignedTable(type) {
             assignedFilterType = type;
-            const filters = ['All', 'OnlineBanking', 'MobilePayment', 'LoadCard'];
-            const filterIds = { All: 'btn-filter-all', OnlineBanking: 'btn-filter-ob', MobilePayment: 'btn-filter-mp', LoadCard: 'btn-filter-lc' };
-            filters.forEach(f => {
-                const el = document.getElementById(filterIds[f]);
-                if (el) el.className = f === type ? "px-2.5 py-1 rounded-md bg-white text-slate-800 font-bold shadow-sm" : "px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-800";
-            });
             if (ruleGroupDraft) renderAssignedChannelsTable(ruleGroupDraft);
         }
 
