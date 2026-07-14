@@ -817,30 +817,6 @@
                         </div>
                     </div>
 
-                    <!-- 報表指標面板 -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                            <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">總嘗試筆數</div>
-                            <div class="text-xl font-bold text-slate-800" id="kpi-ledger-attempts">0 筆</div>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                            <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">成功交易金額 (等值 USD)</div>
-                            <div class="text-xl font-bold text-slate-800" id="kpi-ledger-volume">$0 USD</div>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                            <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">手續費總支出 (等值 USD)</div>
-                            <div class="text-xl font-bold text-slate-800" id="kpi-ledger-fees">$0 USD</div>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                            <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">智慧分流平均成功率</div>
-                            <div class="text-xl font-bold text-emerald-600" id="kpi-ledger-rate">0.00%</div>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                            <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">風控熔斷攔截筆數</div>
-                            <div class="text-xl font-bold text-rose-600" id="kpi-ledger-rejected">0 筆</div>
-                        </div>
-                    </div>
-
                     <!-- 明細資料表格 -->
                     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                         <div class="overflow-x-auto">
@@ -851,13 +827,13 @@
                                         <th class="p-3">系統交易單號 (System Tx ID)</th>
                                         <th class="p-3">來源站點</th>
                                         <th class="p-3 text-center">交易類型</th>
-                                        <th class="p-3">3.0 策略群組</th>
                                         <th class="p-3">實際商戶編號</th>
                                         <th class="p-3">網關</th>
                                         <th class="p-3">渠道類型</th>
-                                        <th class="p-3 text-right">結算金額</th>
+                                        <th class="p-3 text-right">金額</th>
+                                        <th class="p-3 text-center">幣別</th>
                                         <th class="p-3 text-right">手續費 (預估)</th>
-                                        <th class="p-3 text-center">最終狀態</th>
+                                        <th class="p-3 text-center">狀態</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100" id="report-table-body">
@@ -897,15 +873,6 @@
 
         // === 1. 全局輔助與財務換算函數 (移至最上層以防 ReferenceError) ===
 
-        // 財務幣別換算 USD
-        function getUSDEquivalent(amount, currency) {
-            if (currency === 'MYR') return amount / 4.4;
-            if (currency === 'THB') return amount / 35;
-            if (currency === 'IDR') return amount / 15000;
-            if (currency === 'INR') return amount / 83;
-            return amount;
-        }
-
         // 交易單號自動生成：存款前綴為 DP，提款前綴為 WP
         function getTransactionId(item) {
             const prefix = (item.direction === 'Withdrawal') ? 'WP' : 'DP';
@@ -923,21 +890,6 @@
                 notify.classList.add('opacity-0', 'translate-y-2');
                 setTimeout(() => notify.remove(), 300);
             }, 3000);
-        }
-
-        // 更新明細報表 KPI 看板指標
-        function updateMetrics(attempts, volume, fees, rejected, rate) {
-            const attemptsEl = document.getElementById('kpi-ledger-attempts');
-            const volEl = document.getElementById('kpi-ledger-volume');
-            const feeEl = document.getElementById('kpi-ledger-fees');
-            const rejectedEl = document.getElementById('kpi-ledger-rejected');
-            const rateEl = document.getElementById('kpi-ledger-rate');
-
-            if (attemptsEl) attemptsEl.innerText = `${attempts} 筆`;
-            if (volEl) volEl.innerText = `$${Math.round(volume).toLocaleString()} USD`;
-            if (feeEl) feeEl.innerText = `$${Math.round(fees).toLocaleString()} USD`;
-            if (rateEl) rateEl.innerText = rate;
-            if (rejectedEl) rejectedEl.innerText = `${rejected} 筆`;
         }
 
         // 雙向同步渠道對應之群組 metadata
@@ -1384,38 +1336,7 @@
             alertSimulator(`精確檢索：已篩選出 ${filtered.length} 筆交易明細金流數據！`);
         }
 
-        // 報表數據全域 KPI 統計
         function renderReportView(dataArray) {
-            let totalUSDPayloads = 0;
-            let totalUSDFees = 0;
-            let successCount = 0;
-            let failedCount = 0;
-            let rejectedCount = 0;
-            let totalTx = dataArray.length;
-
-            dataArray.forEach(item => {
-                const amountInUSD = getUSDEquivalent(item.successAmount, item.currency);
-                const feeInUSD = getUSDEquivalent(item.fee, item.currency);
-
-                if (item.isRejected) {
-                    rejectedCount++;
-                } else if (item.status === 'Pending') {
-                    // 處理中不計入成功與失敗筆數
-                } else if (item.successCount > 0) {
-                    successCount++;
-                    totalUSDPayloads += amountInUSD;
-                    totalUSDFees += feeInUSD;
-                } else {
-                    failedCount++;
-                }
-            });
-
-            const overallRate = totalTx > 0
-                ? ((successCount / totalTx) * 100).toFixed(2) + "%"
-                : "0.00%";
-
-            updateMetrics(totalTx, totalUSDPayloads, totalUSDFees, rejectedCount, overallRate);
-
             // 動態分頁資料流定錨
             reportFilteredData = dataArray;
             reportCurrentPage = 1;
@@ -1532,11 +1453,11 @@
                     <td class="p-3 font-bold text-slate-700">${pseudoTxId}</td>
                     <td class="p-3"><span class="bg-slate-100 text-slate-800 text-[10px] px-1.5 py-0.5 rounded font-bold">${item.site}</span></td>
                     <td class="p-3 text-center">${typeBadge}</td>
-                    <td class="p-3 text-brand-700 font-bold font-sans">${item.groupName}</td>
                     <td class="p-3 font-bold text-slate-800">${item.sysId}</td>
                     <td class="p-3 text-slate-700 font-semibold">${item.gateway}</td>
                     <td class="p-3 text-slate-600 font-mono">${item.type}</td>
-                    <td class="p-3 text-right font-bold text-slate-900">${item.successAmount.toLocaleString()} ${item.currency}</td>
+                    <td class="p-3 text-right font-bold text-slate-900">${item.successAmount.toLocaleString()}</td>
+                    <td class="p-3 text-center font-bold text-slate-600">${item.currency}</td>
                     <td class="p-3 text-right text-rose-600">$${item.fee.toLocaleString()}</td>
                     <td class="p-3 text-center">${statusBadge}</td>
                 `;
