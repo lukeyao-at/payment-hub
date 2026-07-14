@@ -813,6 +813,16 @@
                                 <option value="REJECTED">REJECTED (熔斷)</option>
                             </select>
                         </div>
+                        <div class="w-40">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">B2C 通知狀態 (Notify)</label>
+                            <select id="report-notify-status" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">全部</option>
+                                <option value="Delivered">Delivered (已送達)</option>
+                                <option value="Failed">Failed (送達失敗)</option>
+                                <option value="Pending">Pending (送出中)</option>
+                                <option value="NotSent">NotSent (尚未送出)</option>
+                            </select>
+                        </div>
                         <div class="w-48">
                             <label class="block text-xs font-bold text-slate-500 mb-1.5">系統交易單號 (System Tx ID)</label>
                             <input type="text" id="report-txid" placeholder="輸入單號搜尋..." class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
@@ -848,6 +858,7 @@
                                         <th class="p-3 text-center">Currency</th>
                                         <th class="p-3 text-right">Fee (Est.)</th>
                                         <th class="p-3 text-center">Status</th>
+                                        <th class="p-3 text-center">B2C Notify</th>
                                         <th class="p-3 text-center">Action</th>
                                     </tr>
                                 </thead>
@@ -979,22 +990,24 @@
         ];
 
         // 模擬商戶交易明細總帳數據庫 (15 筆明細，完全防截斷且保留 Page 1、Page 2、成敗退款及 Deposit / Withdrawal 方向驗證)
+        // notifyStatus 追蹤 Hub → B2C 平台的通知送達狀態，與交易本身的成敗結果是兩個獨立維度
+        // Delivered：B2C 已確認收到 / Failed：送過但失敗（需重送）/ Pending：送出中尚未確認 / NotSent：Hub 尚未嘗試送出
         let merchantReportData = [
-            { date: '2026-06-28 10:30:22', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', currency: 'THB', successAmount: 3500, fee: 52.5, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', direction: 'Deposit' },
-            { date: '2026-06-28 09:12:44', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', currency: 'MYR', successAmount: 450, fee: 9.0, successCount: 1, failedCount: 0, status: 'Pending', site: '12bet', groupName: '大額深夜防刷組', direction: 'Deposit' },
-            { date: '2026-06-28 02:45:18', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'EWallet', currency: 'THB', successAmount: 0, fee: 0, successCount: 0, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', isRejected: true, direction: 'Deposit' },
-            { date: '2026-06-27 23:55:12', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', currency: 'THB', successAmount: 1500, fee: 16.5, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: '新玩家群', direction: 'Deposit' },
-            { date: '2026-06-27 21:14:05', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', currency: 'IDR', successAmount: 15000000, fee: 165000, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', direction: 'Deposit' },
-            { date: '2026-06-27 18:44:30', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'TopupCard', currency: 'THB', successAmount: 500, fee: 17.5, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', direction: 'Deposit' },
-            { date: '2026-06-27 15:30:22', sysId: 'SYS_MER_004', gateway: 'AsiaTrust', type: 'OnlineBanking', currency: 'USD', successAmount: 2500, fee: 22.5, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: 'Master Pool', direction: 'Deposit' },
-            { date: '2026-06-27 11:22:10', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', currency: 'MYR', successAmount: 900, fee: 18.0, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: 'Master Pool', direction: 'Deposit' },
-            { date: '2026-06-27 09:05:14', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', currency: 'IDR', successAmount: 800000, fee: 14400, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', direction: 'Deposit' },
-            { date: '2026-06-27 01:20:30', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', currency: 'THB', successAmount: 0, fee: 0, successCount: 0, failedCount: 0, status: 'Completed', site: '12bet', groupName: '大額深夜防刷組', isRejected: true, direction: 'Deposit' },
-            { date: '2026-06-26 23:14:02', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'TopupCard', currency: 'THB', successAmount: 1000, fee: 35.0, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', direction: 'Deposit' },
-            { date: '2026-06-26 21:04:18', sysId: 'SYS_MER_004', gateway: 'AsiaTrust', type: 'OnlineBanking', currency: 'USD', successAmount: 12000, fee: 108, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: 'Master Pool', direction: 'Deposit' },
-            { date: '2026-06-26 19:45:30', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', currency: 'MYR', successAmount: 3200, fee: 15, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: '提款安全組', direction: 'Withdrawal' },
-            { date: '2026-06-26 16:30:12', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'CardTransfer', currency: 'MYR', successAmount: 8500, fee: 15, successCount: 0, failedCount: 0, status: 'Pending', site: 'Nova', groupName: '提款安全組', direction: 'Withdrawal' },
-            { date: '2026-06-26 14:12:05', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', currency: 'IDR', successAmount: 45000000, fee: 495000, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '印尼盾高頻老客組', direction: 'Deposit' }
+            { date: '2026-06-28 10:30:22', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', currency: 'THB', successAmount: 3500, fee: 52.5, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', direction: 'Deposit', notifyStatus: 'Delivered' },
+            { date: '2026-06-28 09:12:44', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', currency: 'MYR', successAmount: 450, fee: 9.0, successCount: 1, failedCount: 0, status: 'Pending', site: '12bet', groupName: '大額深夜防刷組', direction: 'Deposit', notifyStatus: 'NotSent' },
+            { date: '2026-06-28 02:45:18', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'EWallet', currency: 'THB', successAmount: 0, fee: 0, successCount: 0, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', isRejected: true, direction: 'Deposit', notifyStatus: 'Failed' },
+            { date: '2026-06-27 23:55:12', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', currency: 'THB', successAmount: 1500, fee: 16.5, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: '新玩家群', direction: 'Deposit', notifyStatus: 'Failed' },
+            { date: '2026-06-27 21:14:05', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', currency: 'IDR', successAmount: 15000000, fee: 165000, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', direction: 'Deposit', notifyStatus: 'Delivered' },
+            { date: '2026-06-27 18:44:30', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'TopupCard', currency: 'THB', successAmount: 500, fee: 17.5, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', direction: 'Deposit', notifyStatus: 'Delivered' },
+            { date: '2026-06-27 15:30:22', sysId: 'SYS_MER_004', gateway: 'AsiaTrust', type: 'OnlineBanking', currency: 'USD', successAmount: 2500, fee: 22.5, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: 'Master Pool', direction: 'Deposit', notifyStatus: 'Delivered' },
+            { date: '2026-06-27 11:22:10', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', currency: 'MYR', successAmount: 900, fee: 18.0, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: 'Master Pool', direction: 'Deposit', notifyStatus: 'Pending' },
+            { date: '2026-06-27 09:05:14', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', currency: 'IDR', successAmount: 800000, fee: 14400, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', direction: 'Deposit', notifyStatus: 'Delivered' },
+            { date: '2026-06-27 01:20:30', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', currency: 'THB', successAmount: 0, fee: 0, successCount: 0, failedCount: 0, status: 'Completed', site: '12bet', groupName: '大額深夜防刷組', isRejected: true, direction: 'Deposit', notifyStatus: 'NotSent' },
+            { date: '2026-06-26 23:14:02', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'TopupCard', currency: 'THB', successAmount: 1000, fee: 35.0, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', direction: 'Deposit', notifyStatus: 'Delivered' },
+            { date: '2026-06-26 21:04:18', sysId: 'SYS_MER_004', gateway: 'AsiaTrust', type: 'OnlineBanking', currency: 'USD', successAmount: 12000, fee: 108, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: 'Master Pool', direction: 'Deposit', notifyStatus: 'Delivered' },
+            { date: '2026-06-26 19:45:30', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', currency: 'MYR', successAmount: 3200, fee: 15, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: '提款安全組', direction: 'Withdrawal', notifyStatus: 'Delivered' },
+            { date: '2026-06-26 16:30:12', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'CardTransfer', currency: 'MYR', successAmount: 8500, fee: 15, successCount: 0, failedCount: 0, status: 'Pending', site: 'Nova', groupName: '提款安全組', direction: 'Withdrawal', notifyStatus: 'NotSent' },
+            { date: '2026-06-26 14:12:05', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', currency: 'IDR', successAmount: 45000000, fee: 495000, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '印尼盾高頻老客組', direction: 'Deposit', notifyStatus: 'Delivered' }
         ];
 
         // === 3. Tab 切換與側邊欄 ===
@@ -1313,6 +1326,7 @@
             const gateway = document.getElementById('report-gateway').value;
             const type = document.getElementById('report-type').value;
             const status = document.getElementById('report-status').value;
+            const notifyStatus = document.getElementById('report-notify-status').value;
             const txIdInput = document.getElementById('report-txid').value.trim().toLowerCase();
             const groupInput = document.getElementById('report-group').value.trim().toLowerCase();
 
@@ -1339,12 +1353,14 @@
                     }
                 }
 
+                const matchNotifyStatus = notifyStatus === 'All' ? true : item.notifyStatus === notifyStatus;
+
                 // 模糊單號比對
                 const actualTxId = getTransactionId(item).toLowerCase();
                 const matchTxId = txIdInput ? actualTxId.includes(txIdInput) : true;
                 const matchGroup = groupInput ? item.groupName.toLowerCase().includes(groupInput) : true;
 
-                return matchStart && matchEnd && matchSysId && matchSite && matchDirection && matchGateway && matchType && matchStatus && matchTxId && matchGroup;
+                return matchStart && matchEnd && matchSysId && matchSite && matchDirection && matchGateway && matchType && matchStatus && matchNotifyStatus && matchTxId && matchGroup;
             });
 
             renderReportView(filtered);
@@ -1461,6 +1477,18 @@
                     ? `<span class="text-blue-700 bg-blue-100 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fa-solid fa-arrow-down-long"></i> Deposit</span>`
                     : `<span class="text-purple-700 bg-purple-100 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fa-solid fa-arrow-up-long"></i> Withdrawal</span>`;
 
+                // Hub → B2C 通知送達狀態徽章（獨立於交易本身的成敗結果）
+                let notifyBadge = '';
+                if (item.notifyStatus === 'Delivered') {
+                    notifyBadge = `<span class="bg-emerald-100 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-check-double"></i> Delivered</span>`;
+                } else if (item.notifyStatus === 'Failed') {
+                    notifyBadge = `<span class="bg-rose-100 text-rose-800 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-triangle-exclamation"></i> Failed</span>`;
+                } else if (item.notifyStatus === 'Pending') {
+                    notifyBadge = `<span class="bg-amber-100 text-amber-800 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-clock"></i> Pending</span>`;
+                } else {
+                    notifyBadge = `<span class="bg-slate-200 text-slate-700 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-minus"></i> Not Sent</span>`;
+                }
+
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 transition-colors text-xs font-mono';
                 tr.innerHTML = `
@@ -1475,6 +1503,7 @@
                     <td class="p-3 text-center font-bold text-slate-600">${item.currency}</td>
                     <td class="p-3 text-right text-rose-600">$${item.fee.toLocaleString()}</td>
                     <td class="p-3 text-center">${statusBadge}</td>
+                    <td class="p-3 text-center">${notifyBadge}</td>
                     <td class="p-3 text-center font-sans">
                         <div class="flex items-center justify-center gap-1.5">
                             ${itemStatus !== 'SUCCESS' ? `<button onclick="approveTransaction('${pseudoTxId}')" class="text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-1 rounded text-[10px] font-bold transition-all" title="Manually approve this transaction"><i class="fa-solid fa-check"></i> Approve</button>` : ''}
@@ -1498,10 +1527,12 @@
             alertSimulator(`✅ 交易 [${txId}] 已手動核准，狀態更新為 SUCCESS`);
         }
 
-        // 重送交易結果通知給 B2C 平台端（模擬重新觸發 callback）
+        // 重送交易結果通知給 B2C 平台端（模擬重新觸發 callback，成功後更新 notifyStatus）
         function resendTransactionToB2C(txId) {
             const item = merchantReportData.find(i => getTransactionId(i) === txId);
             if (!item) return;
+            item.notifyStatus = 'Delivered';
+            changeReportPage();
             alertSimulator(`📡 已重新推送交易 [${txId}] 結果至 [${item.site}] 平台 (Callback: 200 OK)`);
         }
 
@@ -1515,6 +1546,7 @@
             const gateway = document.getElementById('report-gateway').value;
             const type = document.getElementById('report-type').value;
             const status = document.getElementById('report-status').value;
+            const notifyStatus = document.getElementById('report-notify-status').value;
             const txIdInput = document.getElementById('report-txid').value.trim().toLowerCase();
             const groupInput = document.getElementById('report-group').value.trim().toLowerCase();
 
@@ -1537,11 +1569,13 @@
                     }
                 }
 
+                const matchNotifyStatus = notifyStatus === 'All' ? true : item.notifyStatus === notifyStatus;
+
                 const pseudoTxId = getTransactionId(item).toLowerCase();
                 const matchTxId = txIdInput ? pseudoTxId.includes(txIdInput) : true;
                 const matchGroup = groupInput ? item.groupName.toLowerCase().includes(groupInput) : true;
 
-                return matchStart && matchEnd && matchSysId && matchSite && matchDirection && matchGateway && matchType && matchStatus && matchTxId && matchGroup;
+                return matchStart && matchEnd && matchSysId && matchSite && matchDirection && matchGateway && matchType && matchStatus && matchNotifyStatus && matchTxId && matchGroup;
             });
 
             if (filtered.length === 0) {
@@ -1550,7 +1584,7 @@
             }
 
             let csvContent = "﻿"; // UTF-8 BOM
-            csvContent += "交易時間,系統交易單號,來源站點,交易類型,3.0策略群組,實際商戶編號,網關,渠道類型,結算金額,結算幣別,通道手續費,交易狀態\n";
+            csvContent += "交易時間,系統交易單號,來源站點,交易類型,3.0策略群組,實際商戶編號,網關,渠道類型,結算金額,結算幣別,通道手續費,交易狀態,B2C通知狀態\n";
             filtered.forEach(item => {
                 const pseudoTxId = getTransactionId(item);
                 let itemStatus = 'PENDING';
@@ -1561,7 +1595,7 @@
 
                 const safeTxId = `'${pseudoTxId}`;
                 const safeDirection = item.direction === 'Deposit' ? 'Deposit' : 'Withdrawal';
-                csvContent += `"${item.date}","${safeTxId}","${item.site}","${safeDirection}","${item.groupName}","${item.sysId}","${item.gateway}","${item.type}",${item.successAmount},"${item.currency}",${item.fee},"${itemStatus}"\n`;
+                csvContent += `"${item.date}","${safeTxId}","${item.site}","${safeDirection}","${item.groupName}","${item.sysId}","${item.gateway}","${item.type}",${item.successAmount},"${item.currency}",${item.fee},"${itemStatus}","${item.notifyStatus}"\n`;
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
