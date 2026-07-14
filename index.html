@@ -1,0 +1,2315 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment 3.0 系統管理後台</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Noto Sans TC 字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- 引入 FontAwesome 圖示 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        },
+                        sidebar: '#0f172a'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 自定義捲軸 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="text-slate-800 h-screen flex overflow-hidden">
+
+    <!-- 1. 編輯商戶帳密與開關彈窗 (Merchant Modal) -->
+    <div id="edit-merchant-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 backdrop-blur-sm transition-all duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl w-[480px] overflow-hidden transform scale-95 transition-transform duration-300" id="modal-container">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                    <i class="fa-solid fa-user-shield text-brand-600"></i> 設定商戶狀態與三方資訊
+                </h3>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-6">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex justify-between items-center">
+                    <div>
+                        <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">商戶編號</div>
+                        <div class="font-mono text-brand-700 font-bold text-lg" id="modal-sys-id">SYS_MER_001</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">所屬網關</div>
+                        <div class="text-xs font-bold text-slate-700 bg-slate-200 px-2 py-0.5 rounded" id="modal-gateway">KPay</div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="text-xs font-bold text-slate-700 flex items-center gap-2 border-b border-slate-100 pb-2">
+                        <i class="fa-solid fa-key text-amber-500"></i> 三方對帳登入資訊
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1.5">登入帳號</label>
+                        <input type="text" id="modal-login-user" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white focus:ring-2 focus:ring-brand-500 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1.5">登入密碼</label>
+                        <div class="relative">
+                            <input type="password" id="modal-login-pass" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white focus:ring-2 focus:ring-brand-500 outline-none transition-all">
+                            <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600">
+                                <i class="fa-solid fa-eye" id="password-toggle-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="text-xs font-bold text-slate-700 flex items-center gap-2 border-b border-slate-100 pb-2">
+                        <i class="fa-solid fa-power-off text-brand-500"></i> 商戶狀態設定
+                    </div>
+                    <div class="flex items-center gap-4 bg-slate-50 p-2 rounded-lg border border-slate-200">
+                        <label class="flex-1 flex items-center justify-center gap-2 cursor-pointer text-sm font-medium py-2 rounded-md transition-all duration-200" id="label-enable">
+                            <input type="radio" name="modal_status" id="radio-enable" value="Enable" class="sr-only" onchange="updateModalRadioUI()">
+                            <i class="fa-solid fa-circle-check"></i> 啟用上線
+                        </label>
+                        <label class="flex-1 flex items-center justify-center gap-2 cursor-pointer text-sm font-medium py-2 rounded-md transition-all duration-200" id="label-disable">
+                            <input type="radio" name="modal_status" id="radio-disable" value="Disable" class="sr-only" onchange="updateModalRadioUI()">
+                            <i class="fa-solid fa-circle-minus"></i> 暫停停用
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2.5">
+                <button onclick="closeEditModal()" class="px-5 py-2 border border-slate-300 rounded-lg text-slate-600 hover:bg-white text-sm font-medium transition-colors">取消</button>
+                <button onclick="saveMerchantSettings()" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors flex items-center gap-1.5">
+                    <i class="fa-solid fa-floppy-disk"></i> 儲存設定
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 2. 編輯 Gateway 渠道彈窗 -->
+    <div id="edit-gateway-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 backdrop-blur-sm transition-all duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl w-[550px] overflow-hidden transform scale-95 transition-transform duration-300" id="gateway-modal-container">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-brand-600"></i> 編輯渠道物理設定 (Payment Gateway)
+                </h3>
+                <button onclick="closeGatewayModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-5 max-h-[500px] overflow-y-auto">
+                <div class="bg-brand-50 p-4 rounded-xl border border-brand-100 grid grid-cols-2 gap-2 text-xs">
+                    <div><span class="text-slate-400 font-bold">網關/商戶：</span> <span class="text-brand-900 font-semibold" id="gw-modal-header-gw">Help2Pay (SYS_MER_003)</span></div>
+                    <div><span class="text-slate-400 font-bold">支付類型：</span> <span class="text-brand-900 font-semibold" id="gw-modal-header-type">OnlineBanking</span></div>
+                    <div><span class="text-slate-400 font-bold">交易方向：</span> <span class="text-brand-900 font-semibold" id="gw-modal-header-method">Deposit</span></div>
+                    <div><span class="text-slate-400 font-bold">計價幣別：</span> <span class="text-brand-900 font-semibold font-mono" id="gw-modal-header-currency">MYR</span></div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="text-xs font-bold text-slate-700 flex items-center gap-2 border-b pb-1">
+                        <i class="fa-solid fa-scale-balanced text-brand-500"></i> 交易限額控制
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">單筆最低限額 (Min)</label>
+                            <input type="number" id="gw-modal-min" class="w-full border border-slate-300 rounded-lg p-2 text-sm font-mono focus:ring-2 focus:ring-brand-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">單筆最高限額 (Max)</label>
+                            <input type="number" id="gw-modal-max" class="w-full border border-slate-300 rounded-lg p-2 text-sm font-mono focus:ring-2 focus:ring-brand-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="text-xs font-bold text-slate-700 flex items-center gap-2 border-b pb-1">
+                        <i class="fa-solid fa-percent text-brand-500"></i> 手續費與計費設定
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">百分比協議費率 (Charge Fee %)</label>
+                            <div class="relative">
+                                <input type="number" id="gw-modal-fee" step="0.01" class="w-full border border-slate-300 rounded-lg p-2 pr-8 text-sm font-mono focus:ring-2 focus:ring-brand-500 outline-none text-right">
+                                <span class="absolute right-3 top-2.5 text-slate-400 text-sm">%</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">單筆固定費率 (Per Count)</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-2.5 text-slate-400 text-sm">$</span>
+                                <input type="number" id="gw-modal-percount" step="0.01" class="w-full border border-slate-300 rounded-lg pl-7 p-2 text-sm font-mono focus:ring-2 focus:ring-brand-500 outline-none">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="text-xs font-bold text-slate-700 flex items-center gap-2 border-b pb-1">
+                        <i class="fa-solid fa-share-nodes text-brand-500"></i> 預設指派適用站點 (Gateway Allocation)
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 grid grid-cols-3 gap-2 text-xs">
+                        <label class="flex items-center gap-2 cursor-pointer font-medium p-1.5 hover:bg-white rounded transition-all">
+                            <input type="checkbox" id="gw-modal-site-12bet" class="rounded text-brand-600 focus:ring-0"> 12bet
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer font-medium p-1.5 hover:bg-white rounded transition-all">
+                            <input type="checkbox" id="gw-modal-site-nova" class="rounded text-brand-600 focus:ring-0"> Nova
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer font-medium p-1.5 hover:bg-white rounded transition-all">
+                            <input type="checkbox" id="gw-modal-site-bwing" class="rounded text-brand-600 focus:ring-0"> Bwing
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2.5 flex-shrink-0">
+                <button onclick="closeGatewayModal()" class="px-5 py-2 border border-slate-300 rounded-lg text-slate-600 hover:bg-white text-sm font-medium transition-colors">取消</button>
+                <button onclick="saveGatewaySettings()" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors flex items-center gap-1.5">
+                    <i class="fa-solid fa-floppy-disk"></i> 儲存渠道配置
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 側邊導覽列 (Sidebar Navigation) -->
+    <aside class="w-64 bg-sidebar text-slate-300 flex flex-col flex-shrink-0 shadow-xl z-20 transition-all duration-300 ease-in-out">
+        <div class="h-16 flex items-center px-6 bg-sidebar border-b border-slate-800 flex-shrink-0">
+            <i class="fa-solid fa-layer-group text-blue-400 text-xl mr-3"></i>
+            <span class="text-white font-bold tracking-wider whitespace-nowrap overflow-hidden">Payment 3.0</span>
+        </div>
+
+        <div class="p-5 border-b border-slate-800 flex-shrink-0">
+            <div class="text-xs text-slate-500 mb-1 whitespace-nowrap overflow-hidden">系統環境</div>
+            <div class="text-sm text-white font-medium flex items-center gap-2 whitespace-nowrap overflow-hidden">
+                <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div> 系統營運後台 (Demo)
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto py-4 no-scrollbar">
+            <div class="px-6 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap overflow-hidden">金流核心管理</div>
+            <nav class="space-y-1 px-3 mb-6">
+                <button onclick="switchTab('wf-merchant')" id="btn-wf-merchant" class="w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                    <i class="fa-solid fa-shield-halved w-6 text-center text-slate-400"></i> 商戶管理
+                </button>
+                <button onclick="switchTab('wf-channel')" id="btn-wf-channel" class="w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                    <i class="fa-solid fa-network-wired w-6 text-center text-slate-400"></i> 網關與渠道
+                </button>
+                <button onclick="switchTab('wf-report')" id="btn-wf-report" class="w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                    <i class="fa-solid fa-chart-line w-6 text-center text-slate-400"></i> 商戶金流明細報表
+                </button>
+            </nav>
+
+            <div class="px-6 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap overflow-hidden">智慧策略引擎</div>
+            <nav class="space-y-1 px-3 mb-6">
+                <button onclick="switchTab('wf-override')" id="btn-wf-override" class="w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                    <i class="fa-solid fa-sliders w-6 text-center text-slate-400"></i> 智慧分群與渠道對應
+                </button>
+                <button onclick="switchTab('wf-sandbox')" id="btn-wf-sandbox" class="w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                    <i class="fa-solid fa-laptop-code w-6 text-center text-slate-400"></i> B2C 貼標與沙盒模擬
+                </button>
+            </nav>
+        </div>
+
+        <div class="p-4 text-xs text-slate-600 border-t border-slate-800 text-center flex-shrink-0">
+            Prototype v3.6
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow flex-1 flex flex-col h-screen overflow-hidden bg-slate-50 relative">
+
+        <!-- Topbar -->
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 z-10 flex-shrink-0 shadow-sm">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="text-slate-600 hover:text-brand-600 focus:outline-none transition-colors p-2 rounded-lg hover:bg-slate-100 mr-2 flex items-center justify-center" title="收闔/展開側邊欄">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+                <h2 id="page-title" class="text-lg font-bold text-slate-800">商戶管理</h2>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full font-medium"><i class="fa-solid fa-check-double mr-1"></i> 獨立解耦底層架構</span>
+            </div>
+        </header>
+
+        <!-- Dynamic Content -->
+        <div class="flex-1 overflow-y-auto p-6">
+            <div class="max-w-[1450px] mx-auto space-y-6">
+
+                <!-- ================= TAB 1: Payment Merchant Management ================= -->
+                <div id="wf-merchant" class="tab-content active space-y-6">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-end gap-4 flex-wrap">
+                        <div class="w-48">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">網關名稱 (支援模糊)</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-search absolute left-3 top-3 text-slate-400 text-xs"></i>
+                                <input type="text" id="search-merchant-gateway" placeholder="輸入網關名稱..." class="w-full border border-slate-300 rounded-lg pl-8 pr-4 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                            </div>
+                        </div>
+                        <div class="w-48">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">商戶編號 (支援模糊)</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-hashtag absolute left-3 top-3 text-slate-400 text-xs"></i>
+                                <input type="text" id="search-merchant-sysid" placeholder="輸入商戶編號..." class="w-full border border-slate-300 rounded-lg pl-8 pr-4 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                            </div>
+                        </div>
+                        <div class="w-36">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">幣別</label>
+                            <select id="search-merchant-currency" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">全部幣別</option>
+                                <option value="MYR">MYR</option>
+                                <option value="THB">THB</option>
+                                <option value="IDR">IDR</option>
+                                <option value="USD">USD</option>
+                                <option value="INR">INR</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">商戶狀態</label>
+                            <select id="search-merchant-status" class="border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 w-36 shadow-sm">
+                                <option value="All">全部狀態</option>
+                                <option value="Enable">啟用上線</option>
+                                <option value="Disable">暫停停用</option>
+                            </select>
+                        </div>
+                        <button onclick="handleMerchantSearch()" class="bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
+                            <i class="fa-solid fa-magnifying-glass"></i> 搜尋
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
+                                    <tr>
+                                        <th class="p-4 w-44">商戶編號</th>
+                                        <th class="p-4">所屬網關</th>
+                                        <th class="p-4">幣別</th>
+                                        <th class="p-4">商戶餘額</th>
+                                        <th class="p-4 text-center w-36">三方帳戶資訊</th>
+                                        <th class="p-4 text-center w-32">狀態</th>
+                                        <th class="p-4 text-center w-32">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100" id="merchant-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= TAB 2: Payment Gateway ================= -->
+                <div id="wf-channel" class="tab-content space-y-6">
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">幣別</label>
+                                <select id="filter-chan-currency" class="w-full border border-slate-300 rounded-lg p-2.5 text-xs bg-white outline-none h-[38px]">
+                                    <option value="All" selected>全部</option>
+                                    <option value="THB">THB</option>
+                                    <option value="MYR">MYR</option>
+                                    <option value="IDR">IDR</option>
+                                    <option value="INR">INR</option>
+                                    <option value="USD">USD</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">交易方向</label>
+                                <select id="filter-chan-method" class="w-full border border-slate-300 rounded-lg p-2.5 text-xs bg-white outline-none h-[38px]">
+                                    <option value="All">全部</option>
+                                    <option value="Deposit" selected>代收 (Deposit)</option>
+                                    <option value="Withdrawal">代付 (Withdrawal)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">所屬網關</label>
+                                <select id="filter-chan-gateway" class="w-full border border-slate-300 rounded-lg p-2.5 text-xs bg-white outline-none h-[38px]">
+                                    <option value="All" selected>全部</option>
+                                    <option value="Help2Pay">Help2Pay</option>
+                                    <option value="KPay">KPay</option>
+                                    <option value="PayHelper">PayHelper</option>
+                                    <option value="AsiaTrust">AsiaTrust</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">渠道類型</label>
+                                <select id="filter-chan-type" class="w-full border border-slate-300 rounded-lg p-2.5 text-xs bg-white outline-none h-[38px]">
+                                    <option value="All" selected>全部</option>
+                                    <option value="OnlineBanking">OnlineBanking (網銀)</option>
+                                    <option value="MobilePayment">MobilePayment (行動支付)</option>
+                                    <option value="LoadCard">LoadCard (儲值卡)</option>
+                                    <option value="ChatTransfer">ChatTransfer (協定出款)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">狀態</label>
+                                <select id="filter-chan-status" class="w-full border border-slate-300 rounded-lg p-2.5 text-xs bg-white outline-none h-[38px]">
+                                    <option value="All">全部</option>
+                                    <option value="Active">啟用上線</option>
+                                    <option value="Inactive">關閉停用</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex pt-2 border-t border-slate-100 justify-end">
+                            <button onclick="handleChannelSearch()" class="bg-brand-600 hover:bg-brand-700 text-white font-medium text-xs px-6 py-2 rounded-lg shadow-sm transition-all flex items-center gap-1.5">
+                                <i class="fa-solid fa-search"></i> 搜尋
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs whitespace-nowrap">
+                                <thead class="bg-slate-100 border-b border-slate-200 text-slate-600 font-bold">
+                                    <tr>
+                                        <th class="p-3 text-center w-20">操作</th>
+                                        <th class="p-3 text-center w-16">狀態</th>
+                                        <th class="p-3">交易方向</th>
+                                        <th class="p-3">所屬網關</th>
+                                        <th class="p-3 text-blue-800 bg-blue-50/50 font-bold">商戶編號</th>
+                                        <th class="p-3">渠道類型</th>
+                                        <th class="p-3 text-brand-800 bg-brand-50/50 font-bold">分配適用站點</th>
+                                        <th class="p-3 text-center font-bold">幣別</th>
+                                        <th class="p-3 text-right font-bold">最低限制</th>
+                                        <th class="p-3 text-right font-bold">最高限制</th>
+                                        <th class="p-3 text-right font-bold">費率 (%)</th>
+                                        <th class="p-3 text-right font-bold">單筆固定費</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100" id="channel-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="bg-slate-50 border-t border-slate-200 p-4 flex items-center justify-between text-xs text-slate-500">
+                            <div><span id="channel-table-summary">Showing 1 to 11 of 11 entries</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= TAB 3: Smart Grouping & Channels ================= -->
+                <div id="wf-override" class="tab-content space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                        <!-- 左側：平台與群組分類樹狀結構 -->
+                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                            <div class="border-b pb-3 space-y-3">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 mb-1">選擇站點</label>
+                                        <select id="rule-site-filter" onchange="handleRuleFilterChange()" class="w-full border border-slate-300 rounded-lg p-2 text-xs bg-white outline-none font-bold text-brand-800">
+                                            <option value="12bet" selected>12bet</option>
+                                            <option value="Nova">Nova</option>
+                                            <option value="Bwing">Bwing</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 mb-1">選擇幣別</label>
+                                        <select id="rule-currency-filter" onchange="handleRuleFilterChange()" class="w-full border border-slate-300 rounded-lg p-2 text-xs bg-white outline-none font-bold text-brand-800">
+                                            <option value="THB" selected>THB</option>
+                                            <option value="MYR">MYR</option>
+                                            <option value="IDR">IDR</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-center pt-1" id="group-action-row">
+                                    <h3 class="font-bold text-slate-800 text-xs" id="group-list-title">12bet (THB) 渠道與分群對照</h3>
+                                    <button onclick="addNewGroupShell()" class="text-xs bg-brand-50 hover:bg-brand-100 text-brand-600 px-2.5 py-1 rounded-lg font-bold transition-all"><i class="fa-solid fa-plus"></i> 新增群組</button>
+                                </div>
+                            </div>
+                            <div class="space-y-2 max-h-[360px] overflow-y-auto pr-1" id="rule-groups-list-container">
+                                <!-- 動態渲染 -->
+                            </div>
+                        </div>
+
+                        <!-- 右側：編輯自訂群組與渠道指派面板 -->
+                        <div class="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6" id="rule-builder-panel">
+                            <div class="border-b pb-4 flex justify-between items-center col-span-2">
+                                <div id="panel-title-area">
+                                    <h3 class="font-bold text-slate-800 text-sm" id="main-panel-title">自訂群組渠道歸類管理</h3>
+                                    <p class="text-[11px] text-slate-400 mt-0.5" id="main-panel-subtitle">手動從預設選項中挪用、指派特定渠道放入此群組</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs bg-slate-100 text-slate-500 font-bold px-2 py-1 rounded font-mono" id="rule-current-id">RULE_GRP_001</span>
+                                    <button id="btn-delete-group" onclick="deleteCurrentGroup()" class="text-rose-600 hover:bg-rose-50 border border-rose-200 hover:border-rose-300 px-2.5 py-1 rounded text-xs font-bold transition-all flex items-center gap-1">
+                                        <i class="fa-solid fa-trash-can"></i> 刪除群組
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 基礎屬性 -->
+                            <div class="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-1.5" id="name-field-label">群組/標籤名稱</label>
+                                    <input type="text" id="rule-alias-name" class="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-1 focus:ring-brand-500 outline-none font-medium">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-1.5">歸屬平台</label>
+                                    <input type="text" id="rule-site-readonly" class="w-full border border-slate-200 bg-slate-50 rounded-lg p-2 text-xs text-slate-500 outline-none" readonly>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-1.5">歸屬幣別</label>
+                                    <input type="text" id="rule-currency-readonly" class="w-full border border-slate-200 bg-slate-50 rounded-lg p-2 text-xs text-slate-500 outline-none" readonly>
+                                </div>
+                            </div>
+
+                            <!-- 已指派渠道列表 -->
+                            <div class="space-y-3">
+                                <div class="flex flex-wrap justify-between items-center gap-2">
+                                    <label class="block text-xs font-bold text-slate-700" id="assigned-table-label">已指派渠道</label>
+
+                                    <!-- 篩選與排序控制 -->
+                                    <div class="flex items-center gap-2" id="filter-sort-controls">
+                                        <div class="flex bg-slate-100 p-0.5 rounded-lg border text-[11px]" id="assigned-type-filters">
+                                            <button onclick="filterAssignedTable('All')" id="btn-filter-all" class="px-2.5 py-1 rounded-md bg-white text-slate-800 font-bold shadow-sm">全部</button>
+                                            <button onclick="filterAssignedTable('OnlineBanking')" id="btn-filter-ob" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-800">網銀</button>
+                                            <button onclick="filterAssignedTable('MobilePayment')" id="btn-filter-mp" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-800">行動</button>
+                                            <button onclick="filterAssignedTable('LoadCard')" id="btn-filter-lc" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-800">儲值卡</button>
+                                        </div>
+                                        <button onclick="toggleAssignedSort()" class="border bg-white hover:bg-slate-50 text-[11px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 text-slate-700">
+                                            <i class="fa-solid fa-sort"></i> <span id="sort-btn-label">按類型排序</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="border rounded-lg overflow-hidden bg-white">
+                                    <table class="w-full text-left text-xs whitespace-nowrap">
+                                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
+                                            <tr id="assigned-table-header">
+                                                <th class="p-3">渠道名稱 / 類型</th>
+                                                <th class="p-3 text-center w-16">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100" id="assigned-channels-table-body">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- 指派新渠道區域 -->
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3" id="add-channel-to-group-box">
+                                <h4 class="text-xs font-bold text-slate-700"><i class="fa-solid fa-right-from-bracket text-brand-600 rotate-90 mr-1"></i> 從預設選項池中指派挪用渠道</h4>
+                                <div class="flex gap-3 items-end">
+                                    <div class="w-48">
+                                        <label class="block text-[10px] text-slate-400 font-bold mb-1">過濾渠道類型</label>
+                                        <select id="rule-add-type-filter" onchange="filterAvailableChannelsDropdown()" class="w-full border border-slate-300 rounded-lg p-2 text-xs bg-white focus:ring-1 outline-none">
+                                            <option value="All" selected>全部類型</option>
+                                            <option value="OnlineBanking">OnlineBanking</option>
+                                            <option value="MobilePayment">MobilePayment</option>
+                                            <option value="LoadCard">LoadCard</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex-grow flex-1">
+                                        <label class="block text-[10px] text-slate-400 font-bold mb-1">選擇未指派之預設渠道</label>
+                                        <select id="rule-add-channel-select" class="w-full border border-slate-300 rounded-lg p-2 text-xs bg-white focus:ring-1 outline-none">
+                                        </select>
+                                    </div>
+                                    <button type="button" onclick="addChannelToCurrentGroup()" class="bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-sm transition-all flex items-center gap-1.5">
+                                        <i class="fa-solid fa-plus"></i> 移動指派
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end gap-2.5 pt-4 border-t" id="action-buttons-box">
+                                <button onclick="revertRuleForm()" class="px-5 py-2 border rounded-lg text-slate-600 hover:bg-slate-50 text-xs font-medium transition-colors">還原</button>
+                                <button onclick="saveRuleForm()" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-1.5">
+                                    <i class="fa-solid fa-floppy-disk"></i> 儲存群組歸類
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ================= TAB 4: B2C 貼標與沙盒模擬 ================= -->
+                <div id="wf-sandbox" class="tab-content space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                        <!-- 左半部配置區：特徵判定 (Zone 1) + 1:1 對應矩陣 (Zone 2) 往下排 -->
+                        <div class="lg:col-span-7 space-y-6 flex flex-col">
+
+                            <!-- Zone 1: B2C 會員與特徵分析面板 -->
+                            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                                <div class="space-y-4">
+                                    <div class="border-b pb-2 flex justify-between items-center">
+                                        <span class="text-slate-800 font-bold text-sm flex items-center gap-2">
+                                            <i class="fa-solid fa-users text-emerald-600"></i> 1. 會員物理特徵值分析
+                                        </span>
+                                        <span class="text-[10px] text-slate-400 font-mono">B2C Traits</span>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-500 mb-1.5">選擇模擬玩家帳號</label>
+                                            <select id="b2c-member-select" onchange="loadB2CMemberTraits()" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none font-bold text-slate-700">
+                                                <!-- JS 動態載入 -->
+                                            </select>
+                                        </div>
+
+                                        <!-- 貼標解析結果 -->
+                                        <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl space-y-2 flex flex-col justify-center shadow-sm">
+                                            <div class="text-[10px] text-emerald-800 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                                                <i class="fa-solid fa-tag"></i> 唯一貼標解析結果 (Single Tag)
+                                            </div>
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-xs text-slate-600">分配之平台單一標籤:</span>
+                                                <span id="simulated-matched-b2c-tag" class="text-emerald-700 font-extrabold font-mono text-xs bg-emerald-100 px-2.5 py-1 rounded">TAG_LATE_NIGHT_VIP</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 唯讀物理特徵展示面板 -->
+                                    <div class="bg-slate-900 text-slate-300 p-4 rounded-xl border border-slate-850 space-y-3 font-mono text-xs shadow-inner">
+                                        <div class="text-[10px] text-slate-500 font-bold uppercase tracking-wider border-b border-slate-800 pb-1 mb-1">
+                                            📊 當前會員物理特徵
+                                        </div>
+                                        <div class="grid grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-6">
+                                            <div class="flex justify-between border-r border-slate-800 pr-4">
+                                                <span class="text-slate-500">歸屬平台:</span>
+                                                <span id="display-member-site" class="text-white font-bold">12bet</span>
+                                            </div>
+                                            <div class="flex justify-between border-r border-slate-800 pr-4">
+                                                <span class="text-slate-500">交易幣別:</span>
+                                                <span id="display-member-currency" class="text-brand-400 font-bold">THB</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-slate-500">VIP 等級:</span>
+                                                <span id="display-member-vip" class="text-emerald-400 font-bold">5</span>
+                                            </div>
+                                            <div class="flex justify-between border-r border-slate-800 pr-4">
+                                                <span class="text-slate-500">註冊天數:</span>
+                                                <span id="display-member-reg" class="text-amber-400 font-bold">450 天</span>
+                                            </div>
+                                            <div class="flex justify-between border-r border-slate-800 pr-4">
+                                                <span class="text-slate-500">IP 國家:</span>
+                                                <span id="display-member-ip" class="text-sky-400 font-bold">TH</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-slate-500">成功存款:</span>
+                                                <span id="display-member-dep" class="text-pink-400 font-bold">25 次</span>
+                                            </div>
+                                            <div class="flex justify-between border-r border-slate-800 pr-4">
+                                                <span class="text-slate-500">交易時間:</span>
+                                                <span id="display-member-time" class="text-purple-400 font-bold">02:30</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Zone 2: B2C 平台標籤與 3.0 群組對應矩陣 -->
+                            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                                <div class="space-y-4">
+                                    <div class="border-b pb-2 flex justify-between items-center">
+                                        <span class="text-slate-800 font-bold text-sm flex items-center gap-2">
+                                            <i class="fa-solid fa-link text-blue-600"></i> 2. 標籤與 3.0 群組 1:1 對應關係
+                                        </span>
+                                        <span class="text-[10px] text-slate-400 font-mono">1:1 Mapping</span>
+                                    </div>
+
+                                    <p class="text-[11px] text-slate-500 leading-relaxed">
+                                        此表格定義 B2C 平台產生的標籤，與 Payment 3.0 策略群組的直對映射綁定，不需要任何權重排序優先級。
+                                    </p>
+
+                                    <!-- 綁定關係對照表 -->
+                                    <div class="border border-slate-200 rounded-lg overflow-hidden bg-slate-50 max-h-[220px] overflow-y-auto">
+                                        <table class="w-full text-left text-xs">
+                                            <thead class="bg-slate-100 border-b border-slate-200 text-slate-600 font-bold">
+                                                <tr>
+                                                    <th class="p-3">平台標籤 (B2C Tag)</th>
+                                                    <th class="p-3">➔ 映射 3.0 群組代碼</th>
+                                                    <th class="p-3 text-center w-24">操作</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tag-bindings-tbody" class="divide-y divide-slate-200 text-slate-700 font-mono">
+                                                <!-- JS 動態渲染對應表 -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- 新增綁定關係區塊 -->
+                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 mt-4">
+                                    <h5 class="text-xs font-bold text-slate-700 flex items-center gap-1">
+                                        <i class="fa-solid fa-plus-circle text-brand-600"></i> 新增標籤映射與綁定
+                                    </h5>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-[10px] text-slate-400 font-bold mb-1">平台標籤名稱</label>
+                                            <input type="text" id="add-tag-name" placeholder="例如: TAG_VIP_OVERSEAS" class="w-full border border-slate-300 rounded-lg p-2.5 text-xs outline-none bg-white font-bold uppercase focus:ring-1 focus:ring-brand-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] text-slate-400 font-bold mb-1">綁定 Payment 3.0 策略群組</label>
+                                            <select id="add-b2c-mapping-code" class="w-full border border-slate-300 rounded-lg p-2.5 text-xs bg-white focus:ring-1 outline-none font-bold text-slate-700">
+                                                <!-- 動態由 JavaScript 載入 -->
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-end pt-1">
+                                        <button onclick="saveNewTagBinding()" class="bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-6 py-2.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+                                            <i class="fa-solid fa-link"></i> 綁定對應關係
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 右側：Payment 3.0 中央排他路由決策日誌 -->
+                        <div class="lg:col-span-5 bg-slate-950 p-5 rounded-xl border border-slate-880 flex flex-col justify-between min-h-[580px]">
+                            <div class="space-y-4 flex-1 flex flex-col">
+                                <div class="border-b border-slate-800 pb-2 flex justify-between items-center flex-shrink-0">
+                                    <span class="text-blue-400 font-bold text-sm flex items-center gap-1.5">
+                                        <i class="fa-solid fa-bolt"></i> 3. 智慧排他路由模擬
+                                    </span>
+                                    <span class="text-[9px] text-slate-500 font-mono">Central Routing</span>
+                                </div>
+
+                                <!-- 實際透傳參數展示 -->
+                                <div class="bg-slate-900 p-3.5 rounded-xl border border-slate-850 space-y-2 flex-shrink-0">
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-slate-400 font-bold">API 透傳指令 (clientGroupIds)：</span>
+                                        <span class="text-amber-400 font-bold font-mono" id="simulated-transmitted-group-code">[]</span>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-3 flex-shrink-0">
+                                    <div class="col-span-2">
+                                        <label class="block text-[10px] text-slate-500 mb-1">模擬交易存款金額 (Amount)</label>
+                                        <input type="number" id="sim-amount" value="5500" class="w-full border border-slate-800 bg-slate-900 text-slate-200 font-mono rounded p-2 text-xs outline-none font-bold">
+                                    </div>
+                                    <div class="col-span-2">
+                                        <button onclick="runB2CUnifiedSimulation()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 rounded-lg transition-all shadow-md flex items-center justify-center gap-1.5">
+                                            <i class="fa-solid fa-circle-play"></i> 執行端到端分流模擬
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- 日誌終端機 -->
+                                <div class="flex-grow flex flex-col mt-2 min-h-0">
+                                    <div class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1 flex-shrink-0">
+                                        決策追蹤日誌 (Trace Logs Terminal)
+                                    </div>
+                                    <div id="sim-terminal" class="flex-1 font-mono text-[11px] text-slate-300 overflow-y-auto space-y-1.5 p-3.5 bg-black rounded border border-slate-900 leading-relaxed no-scrollbar min-h-0">
+                                        <span class="text-slate-500">// 請在左側選取模擬帳號，點擊「執行端到端分流模擬」開始...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ================= TAB 5: 商戶金流明細報表 (wf-report) ================= -->
+                <div id="wf-report" class="tab-content space-y-6">
+
+                    <!-- 篩選控制卡片 (Filter Controls Card) -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-end gap-4 flex-wrap">
+                        <div class="w-40">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">開始日期 (From)</label>
+                            <input type="date" id="report-start-date" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                        </div>
+                        <div class="w-40">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">結束日期 (To)</label>
+                            <input type="date" id="report-end-date" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                        </div>
+                        <div class="w-44">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">商戶編號 (Merchant ID)</label>
+                            <select id="report-merchant-id" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">全部商戶</option>
+                                <option value="SYS_MER_001">SYS_MER_001 (KPay)</option>
+                                <option value="SYS_MER_002">SYS_MER_002 (PayHelper)</option>
+                                <option value="SYS_MER_003">SYS_MER_003 (Help2Pay)</option>
+                                <option value="SYS_MER_004">SYS_MER_004 (AsiaTrust)</option>
+                            </select>
+                        </div>
+                        <div class="w-36">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">來源站點 (Site)</label>
+                            <select id="report-site" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">全部站點</option>
+                                <option value="12bet">12bet</option>
+                                <option value="Nova">Nova</option>
+                                <option value="Bwing">Bwing</option>
+                            </select>
+                        </div>
+                        <div class="w-36">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">交易類型 (Type)</label>
+                            <select id="report-direction" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">全部類型</option>
+                                <option value="Deposit">存款 (Deposit)</option>
+                                <option value="Withdrawal">提款 (Withdrawal)</option>
+                            </select>
+                        </div>
+                        <div class="w-40">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">網關品牌 (Gateway)</label>
+                            <select id="report-gateway" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">全部網關</option>
+                                <option value="KPay">KPay</option>
+                                <option value="PayHelper">PayHelper</option>
+                                <option value="Help2Pay">Help2Pay</option>
+                                <option value="AsiaTrust">AsiaTrust</option>
+                            </select>
+                        </div>
+                        <div class="w-36">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">渠道類型 (Type)</label>
+                            <select id="report-type" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">全部類型</option>
+                                <option value="OnlineBanking">OnlineBanking (網銀)</option>
+                                <option value="MobilePayment">MobilePayment (行動)</option>
+                                <option value="LoadCard">LoadCard (儲值卡)</option>
+                                <option value="ChatTransfer">ChatTransfer (協定出款)</option>
+                            </select>
+                        </div>
+                        <div class="w-36">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">交易狀態 (Status)</label>
+                            <select id="report-status" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">全部狀態</option>
+                                <option value="SUCCESS">SUCCESS (成功)</option>
+                                <option value="FAILED">FAILED (失敗)</option>
+                                <option value="PENDING">PENDING (處理中)</option>
+                                <option value="REJECTED">REJECTED (熔斷)</option>
+                            </select>
+                        </div>
+                        <div class="w-48">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">系統交易單號 (System Tx ID)</label>
+                            <input type="text" id="report-txid" placeholder="輸入單號搜尋..." class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                        </div>
+                        <div class="w-48">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">3.0 策略群組名稱</label>
+                            <input type="text" id="report-group" placeholder="輸入分群名稱搜尋..." class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="handleReportSearch()" class="bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
+                                <i class="fa-solid fa-magnifying-glass"></i> 查詢條件
+                            </button>
+                            <button onclick="exportReportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-csv"></i> 匯出報表
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 報表指標面板 -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">總嘗試筆數</div>
+                            <div class="text-xl font-bold text-slate-800" id="kpi-ledger-attempts">0 筆</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">成功交易金額 (等值 USD)</div>
+                            <div class="text-xl font-bold text-slate-800" id="kpi-ledger-volume">$0 USD</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">手續費總支出 (等值 USD)</div>
+                            <div class="text-xl font-bold text-slate-800" id="kpi-ledger-fees">$0 USD</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">智慧分流平均成功率</div>
+                            <div class="text-xl font-bold text-emerald-600" id="kpi-ledger-rate">0.00%</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">風控熔斷攔截筆數</div>
+                            <div class="text-xl font-bold text-rose-600" id="kpi-ledger-rejected">0 筆</div>
+                        </div>
+                    </div>
+
+                    <!-- 明細資料表格 -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm whitespace-nowrap">
+                                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
+                                    <tr>
+                                        <th class="p-3">交易時間</th>
+                                        <th class="p-3">系統交易單號 (System Tx ID)</th>
+                                        <th class="p-3">來源站點</th>
+                                        <th class="p-3 text-center">交易類型</th>
+                                        <th class="p-3">3.0 策略群組</th>
+                                        <th class="p-3">實際商戶編號</th>
+                                        <th class="p-3">網關</th>
+                                        <th class="p-3">渠道類型</th>
+                                        <th class="p-3 text-right">結算金額</th>
+                                        <th class="p-3 text-right">手續費 (預估)</th>
+                                        <th class="p-3 text-center">最終狀態</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100" id="report-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 智慧分頁導覽列 -->
+                        <div class="bg-slate-50 border-t border-slate-200 p-4 flex items-center justify-between text-xs text-slate-500">
+                            <div>
+                                顯示第 <span id="report-page-start" class="font-bold text-slate-700">0</span> 至 <span id="report-page-end" class="font-bold text-slate-700">0</span> 筆，共 <span id="report-total-count" class="font-bold text-slate-700">0</span> 筆金流明細
+                            </div>
+                            <div class="flex items-center gap-1.5" id="report-pagination-buttons">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript Data and Interactive Handler -->
+    <script>
+        // === 0. 全域狀態變數 (State) ===
+        let selectedGroupId = 'VIRTUAL_DEFAULT_POOL';
+        let ruleGroupDraft = null;
+        let assignedFilterType = 'All';
+        let assignedSortOrder = 'Type';
+        let currentEditMerchantId = null;
+        let currentEditChannelId = null;
+        let selectedB2CMemberId = null;
+        let reportFilteredData = [];
+        let reportCurrentPage = 1;
+        const reportPageSize = 10;
+
+        // === 1. 全局輔助與財務換算函數 (移至最上層以防 ReferenceError) ===
+
+        // 財務幣別換算 USD
+        function getUSDEquivalent(amount, currency) {
+            if (currency === 'MYR') return amount / 4.4;
+            if (currency === 'THB') return amount / 35;
+            if (currency === 'IDR') return amount / 15000;
+            if (currency === 'INR') return amount / 83;
+            return amount;
+        }
+
+        // 交易單號自動生成：存款前綴為 DP，提款前綴為 WP
+        function getTransactionId(item) {
+            const prefix = (item.direction === 'Withdrawal') ? 'WP' : 'DP';
+            const numericPart = item.date.replace(/[- :]/g, '').slice(2, 14) + "_" + item.sysId.slice(-3);
+            return prefix + numericPart;
+        }
+
+        // 系統訊息通知氣泡提示
+        function alertSimulator(msg) {
+            const notify = document.createElement('div');
+            notify.className = "fixed bottom-5 right-5 bg-slate-900 text-white text-xs px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2 border border-slate-700 transition-all duration-300";
+            notify.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> <span>${msg}</span>`;
+            document.body.appendChild(notify);
+            setTimeout(() => {
+                notify.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => notify.remove(), 300);
+            }, 3000);
+        }
+
+        // 更新明細報表 KPI 看板指標
+        function updateMetrics(attempts, volume, fees, rejected, rate) {
+            const attemptsEl = document.getElementById('kpi-ledger-attempts');
+            const volEl = document.getElementById('kpi-ledger-volume');
+            const feeEl = document.getElementById('kpi-ledger-fees');
+            const rejectedEl = document.getElementById('kpi-ledger-rejected');
+            const rateEl = document.getElementById('kpi-ledger-rate');
+
+            if (attemptsEl) attemptsEl.innerText = `${attempts} 筆`;
+            if (volEl) volEl.innerText = `$${Math.round(volume).toLocaleString()} USD`;
+            if (feeEl) feeEl.innerText = `$${Math.round(fees).toLocaleString()} USD`;
+            if (rateEl) rateEl.innerText = rate;
+            if (rejectedEl) rejectedEl.innerText = `${rejected} 筆`;
+        }
+
+        // 雙向同步渠道對應之群組 metadata
+        function syncChannelMappedGroups() {
+            channelData.forEach(c => {
+                c.mappedGroups = [];
+            });
+            ruleGroups.forEach(rg => {
+                rg.assignedChannels.forEach(ac => {
+                    const chan = channelData.find(c => c.id === ac.channelId);
+                    if (chan) {
+                        chan.mappedGroups.push({ site: rg.site, name: `${rg.aliasName} (${rg.currency})` });
+                    }
+                });
+            });
+        }
+
+        // === 2. 系統模擬資料池 (商戶、渠道與智慧策略群組) ===
+
+        let merchantData = [
+            { sysId: 'SYS_MER_001', gateway: 'KPay', currency: 'MYR', balance: 1704420, loginUser: 'finance_kpay_01', loginPass: 'Kp#Pass8812', status: 'Enable' },
+            { sysId: 'SYS_MER_002', gateway: 'PayHelper', currency: 'THB', balance: 112000, loginUser: 'finance_payhelper_normal', loginPass: 'PhNormal@332', status: 'Enable' },
+            { sysId: 'SYS_MER_003', gateway: 'Help2Pay', currency: 'IDR', balance: 4414000, loginUser: 'h2p_fin_settle', loginPass: 'H2pSettle_90', status: 'Enable' },
+            { sysId: 'SYS_MER_004', gateway: 'AsiaTrust', currency: 'USD', balance: 42000, loginUser: 'asiatrust_memo', loginPass: 'AT_memo_pass', status: 'Disable' }
+        ];
+
+        let channelData = [
+            { id: 1, method: 'Deposit', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', group: 'Online Banking', type: 'OnlineBanking', currency: 'MYR', min: 10, max: 5000, chargeFee: 1.20, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
+            { id: 2, method: 'Deposit', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', group: 'Online Banking', type: 'OnlineBanking', currency: 'THB', min: 50, max: 20000, chargeFee: 1.50, perCount: 1.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
+            { id: 3, method: 'Deposit', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', group: 'Online Banking', type: 'OnlineBanking', currency: 'IDR', min: 20000, max: 500000, chargeFee: 1.10, perCount: 0.00, status: true, defaultSites: ['12bet', 'Bwing'] },
+            { id: 4, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', group: 'PhonePe', type: 'MobilePayment', currency: 'INR', min: 100, max: 50000, chargeFee: 2.00, perCount: 5.00, status: true, defaultSites: ['Nova'] },
+            { id: 5, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', group: 'GoPay', type: 'MobilePayment', currency: 'IDR', min: 50000, max: 1000000, chargeFee: 1.80, perCount: 10.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
+            { id: 6, method: 'Deposit', gateway: 'PayHelper', sysMerchant: 'SYS_MER_002', group: 'LoadCard', type: 'LoadCard', currency: 'THB', min: 100, max: 5000, chargeFee: 3.50, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
+            { id: 7, method: 'Withdrawal', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', group: 'BankTransfer', type: 'ChatTransfer', currency: 'MYR', min: 100, max: 100000, chargeFee: 0.00, perCount: 15.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
+            { id: 8, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', group: 'PromptPay', type: 'MobilePayment', currency: 'THB', min: 20, max: 15000, chargeFee: 1.10, perCount: 0.50, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
+            { id: 9, method: 'Deposit', gateway: 'PayHelper', sysMerchant: 'SYS_MER_002', group: 'TrueMoney', type: 'MobilePayment', currency: 'THB', min: 50, max: 8000, chargeFee: 1.30, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
+            { id: 10, method: 'Deposit', gateway: 'AsiaTrust', sysMerchant: 'SYS_MER_004', group: 'FastBank', type: 'OnlineBanking', currency: 'THB', min: 500, max: 100000, chargeFee: 0.90, perCount: 2.00, status: true, defaultSites: ['12bet', 'Bwing'] },
+            { id: 11, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', group: 'TrueMoney', type: 'MobilePayment', currency: 'THB', min: 30, max: 10000, chargeFee: 1.25, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] }
+        ];
+
+        let ruleGroups = [
+            { id: 'RULE_GRP_001', aliasName: '大額深夜防刷組', site: '12bet', currency: 'THB', assignedChannels: [{ channelId: 2 }] },
+            { id: 'RULE_GRP_002', aliasName: '印尼盾高頻老客組', site: '12bet', currency: 'IDR', assignedChannels: [{ channelId: 3 }] },
+            { id: 'RULE_GRP_003', aliasName: '新玩家群', site: 'Nova', currency: 'THB', assignedChannels: [{ channelId: 6 }, { channelId: 8 }] },
+            { id: 'RULE_GRP_004', aliasName: '提款安全組', site: 'Nova', currency: 'MYR', assignedChannels: [{ channelId: 7 }] },
+            { id: 'RULE_GRP_005', aliasName: '海外高風險IP組', site: '12bet', currency: 'THB', assignedChannels: [{ channelId: 9 }] }
+        ];
+
+        // B2C 平台會員模擬資料
+        let b2cMembers = [
+            { id: 'M001', name: 'Somchai_TH', site: '12bet', currency: 'THB', vip: 5, regDays: 450, ipCountry: 'TH', depositCount: 25, time: '02:30' },
+            { id: 'M002', name: 'Nurul_MY', site: 'Nova', currency: 'MYR', vip: 1, regDays: 3, ipCountry: 'MY', depositCount: 1, time: '14:20' },
+            { id: 'M003', name: 'Budi_ID', site: '12bet', currency: 'IDR', vip: 8, regDays: 900, ipCountry: 'ID', depositCount: 120, time: '10:00' },
+            { id: 'M004', name: 'Foreigner_X', site: '12bet', currency: 'THB', vip: 2, regDays: 60, ipCountry: 'US', depositCount: 4, time: '16:00' },
+            { id: 'M005', name: 'Generic_BW', site: 'Bwing', currency: 'THB', vip: 3, regDays: 200, ipCountry: 'TH', depositCount: 30, time: '11:00' }
+        ];
+
+        // B2C 平台端貼標規則 (依序比對，第一個符合者中選)
+        let b2cRules = [
+            { site: '12bet', currency: 'THB', tag: 'TAG_LATE_NIGHT_VIP', conditions: { vipMin: 5, timeStart: '00:00', timeEnd: '06:00' } },
+            { site: '12bet', currency: 'THB', tag: 'TAG_OVERSEAS_RISK', conditions: { ipCountryNot: 'TH' } },
+            { site: '12bet', currency: 'IDR', tag: 'TAG_HIGH_FREQ_IDR', conditions: { regDaysMin: 30 } },
+            { site: 'Nova', currency: 'MYR', tag: 'TAG_NEW_PLAYER', conditions: { regDaysMax: 7 } }
+        ];
+
+        // B2C 標籤 <-> Payment 3.0 群組 1:1 綁定
+        let tagBindings = [
+            { tag: 'TAG_LATE_NIGHT_VIP', groupCode: 'RULE_GRP_001' },
+            { tag: 'TAG_HIGH_FREQ_IDR', groupCode: 'RULE_GRP_002' },
+            { tag: 'TAG_NEW_PLAYER', groupCode: 'RULE_GRP_003' },
+            { tag: 'TAG_OVERSEAS_RISK', groupCode: 'RULE_GRP_005' }
+        ];
+
+        // 模擬商戶交易明細總帳數據庫 (15 筆明細，完全防截斷且保留 Page 1、Page 2、成敗退款及 Deposit / Withdrawal 方向驗證)
+        let merchantReportData = [
+            { date: '2026-06-28 10:30:22', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', currency: 'THB', successAmount: 3500, fee: 52.5, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', direction: 'Deposit' },
+            { date: '2026-06-28 09:12:44', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'MobilePayment', currency: 'MYR', successAmount: 450, fee: 9.0, successCount: 1, failedCount: 0, status: 'Pending', site: '12bet', groupName: '大額深夜防刷組', direction: 'Deposit' },
+            { date: '2026-06-28 02:45:18', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'MobilePayment', currency: 'THB', successAmount: 0, fee: 0, successCount: 0, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', isRejected: true, direction: 'Deposit' },
+            { date: '2026-06-27 23:55:12', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'MobilePayment', currency: 'THB', successAmount: 1500, fee: 16.5, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: '新玩家群', direction: 'Deposit' },
+            { date: '2026-06-27 21:14:05', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', currency: 'IDR', successAmount: 15000000, fee: 165000, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', direction: 'Deposit' },
+            { date: '2026-06-27 18:44:30', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'LoadCard', currency: 'THB', successAmount: 500, fee: 17.5, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', direction: 'Deposit' },
+            { date: '2026-06-27 15:30:22', sysId: 'SYS_MER_004', gateway: 'AsiaTrust', type: 'OnlineBanking', currency: 'USD', successAmount: 2500, fee: 22.5, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: 'Master Pool', direction: 'Deposit' },
+            { date: '2026-06-27 11:22:10', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'MobilePayment', currency: 'MYR', successAmount: 900, fee: 18.0, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: 'Master Pool', direction: 'Deposit' },
+            { date: '2026-06-27 09:05:14', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'MobilePayment', currency: 'IDR', successAmount: 800000, fee: 14400, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', direction: 'Deposit' },
+            { date: '2026-06-27 01:20:30', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', currency: 'THB', successAmount: 0, fee: 0, successCount: 0, failedCount: 0, status: 'Completed', site: '12bet', groupName: '大額深夜防刷組', isRejected: true, direction: 'Deposit' },
+            { date: '2026-06-26 23:14:02', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'LoadCard', currency: 'THB', successAmount: 1000, fee: 35.0, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', direction: 'Deposit' },
+            { date: '2026-06-26 21:04:18', sysId: 'SYS_MER_004', gateway: 'AsiaTrust', type: 'OnlineBanking', currency: 'USD', successAmount: 12000, fee: 108, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: 'Master Pool', direction: 'Deposit' },
+            { date: '2026-06-26 19:45:30', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'MobilePayment', currency: 'MYR', successAmount: 3200, fee: 15, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: '提款安全組', direction: 'Withdrawal' },
+            { date: '2026-06-26 16:30:12', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'ChatTransfer', currency: 'MYR', successAmount: 8500, fee: 15, successCount: 0, failedCount: 0, status: 'Pending', site: 'Nova', groupName: '提款安全組', direction: 'Withdrawal' },
+            { date: '2026-06-26 14:12:05', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', currency: 'IDR', successAmount: 45000000, fee: 495000, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '印尼盾高頻老客組', direction: 'Deposit' }
+        ];
+
+        // === 3. Tab 切換與側邊欄 ===
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById(tabId);
+            if (target) target.classList.add('active');
+
+            document.querySelectorAll('aside nav button').forEach(btn => {
+                btn.classList.remove('bg-slate-800', 'text-white');
+                btn.classList.add('text-slate-300');
+            });
+            const activeBtn = document.getElementById('btn-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-slate-800', 'text-white');
+                activeBtn.classList.remove('text-slate-300');
+            }
+
+            const titles = {
+                'wf-merchant': '商戶管理',
+                'wf-channel': '網關與渠道',
+                'wf-report': '商戶金流明細報表',
+                'wf-override': '智慧分群與渠道對應',
+                'wf-sandbox': 'B2C 貼標與沙盒模擬'
+            };
+            const pageTitle = document.getElementById('page-title');
+            if (pageTitle) pageTitle.innerText = titles[tabId] || '';
+
+            if (tabId === 'wf-override') {
+                handleRuleFilterChange();
+            } else if (tabId === 'wf-sandbox') {
+                renderB2CMemberDropdown();
+                const select = document.getElementById('b2c-member-select');
+                if (select && b2cMembers.length > 0) {
+                    if (!selectedB2CMemberId) selectedB2CMemberId = b2cMembers[0].id;
+                    select.value = selectedB2CMemberId;
+                }
+                loadB2CMemberTraits();
+            } else if (tabId === 'wf-report') {
+                if (!document.getElementById('report-start-date').value) {
+                    document.getElementById('report-start-date').value = '2026-06-01';
+                    document.getElementById('report-end-date').value = '2026-06-30';
+                }
+                handleReportSearch();
+            }
+        }
+
+        function toggleSidebar() {
+            const aside = document.querySelector('aside');
+            if (!aside) return;
+            aside.classList.toggle('w-64');
+            aside.classList.toggle('w-16');
+            document.querySelectorAll('aside .whitespace-nowrap').forEach(el => {
+                el.classList.toggle('opacity-0');
+            });
+        }
+
+        // === 4. 商戶管理 (Tab 1) ===
+
+        function renderMerchantTable(data) {
+            const tbody = document.getElementById('merchant-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 text-sm italic">查無符合條件之商戶資料</td></tr>`;
+                return;
+            }
+
+            data.forEach(m => {
+                const statusBadge = m.status === 'Enable'
+                    ? `<span class="bg-emerald-100 text-emerald-800 font-bold text-[10px] px-2.5 py-1 rounded-full"><i class="fa-solid fa-circle-check"></i> 啟用上線</span>`
+                    : `<span class="bg-slate-200 text-slate-600 font-bold text-[10px] px-2.5 py-1 rounded-full"><i class="fa-solid fa-circle-minus"></i> 暫停停用</span>`;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors text-sm';
+                tr.innerHTML = `
+                    <td class="p-4 font-mono font-bold text-brand-700">${m.sysId}</td>
+                    <td class="p-4 font-semibold text-slate-700">${m.gateway}</td>
+                    <td class="p-4 font-mono text-slate-600">${m.currency}</td>
+                    <td class="p-4 font-mono font-bold text-slate-800">${m.balance.toLocaleString()}</td>
+                    <td class="p-4 text-center"><span class="text-[11px] text-slate-500 font-mono">${m.loginUser}</span></td>
+                    <td class="p-4 text-center">${statusBadge}</td>
+                    <td class="p-4 text-center">
+                        <button onclick="openEditMerchantModal('${m.sysId}')" class="text-brand-600 hover:text-brand-800 transition-colors p-1.5 rounded hover:bg-brand-50" title="編輯">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function handleMerchantSearch() {
+            const gatewayInput = document.getElementById('search-merchant-gateway').value.trim().toLowerCase();
+            const sysIdInput = document.getElementById('search-merchant-sysid').value.trim().toLowerCase();
+            const currency = document.getElementById('search-merchant-currency').value;
+            const status = document.getElementById('search-merchant-status').value;
+
+            const filtered = merchantData.filter(m => {
+                const matchGateway = gatewayInput ? m.gateway.toLowerCase().includes(gatewayInput) : true;
+                const matchSysId = sysIdInput ? m.sysId.toLowerCase().includes(sysIdInput) : true;
+                const matchCurrency = currency === 'All' ? true : m.currency === currency;
+                const matchStatus = status === 'All' ? true : m.status === status;
+                return matchGateway && matchSysId && matchCurrency && matchStatus;
+            });
+
+            renderMerchantTable(filtered);
+            alertSimulator(`🔍 已篩選出 ${filtered.length} 筆商戶資料`);
+        }
+
+        function openEditMerchantModal(sysId) {
+            const m = merchantData.find(x => x.sysId === sysId);
+            if (!m) return;
+            currentEditMerchantId = sysId;
+
+            document.getElementById('modal-sys-id').innerText = m.sysId;
+            document.getElementById('modal-gateway').innerText = m.gateway;
+            document.getElementById('modal-login-user').value = m.loginUser;
+            document.getElementById('modal-login-pass').value = m.loginPass;
+
+            document.getElementById('radio-enable').checked = m.status === 'Enable';
+            document.getElementById('radio-disable').checked = m.status === 'Disable';
+            updateModalRadioUI();
+
+            const modal = document.getElementById('edit-merchant-modal');
+            const container = document.getElementById('modal-container');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            requestAnimationFrame(() => container.classList.remove('scale-95'));
+        }
+
+        function closeEditModal() {
+            const modal = document.getElementById('edit-merchant-modal');
+            const container = document.getElementById('modal-container');
+            container.classList.add('scale-95');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            currentEditMerchantId = null;
+        }
+
+        function togglePasswordVisibility() {
+            const input = document.getElementById('modal-login-pass');
+            const icon = document.getElementById('password-toggle-icon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fa-solid fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fa-solid fa-eye';
+            }
+        }
+
+        function updateModalRadioUI() {
+            const enableChecked = document.getElementById('radio-enable').checked;
+            const labelEnable = document.getElementById('label-enable');
+            const labelDisable = document.getElementById('label-disable');
+            if (enableChecked) {
+                labelEnable.className = "flex-1 flex items-center justify-center gap-2 cursor-pointer text-sm font-bold py-2 rounded-md transition-all duration-200 bg-emerald-500 text-white shadow-sm";
+                labelDisable.className = "flex-1 flex items-center justify-center gap-2 cursor-pointer text-sm font-medium py-2 rounded-md transition-all duration-200 text-slate-500";
+            } else {
+                labelDisable.className = "flex-1 flex items-center justify-center gap-2 cursor-pointer text-sm font-bold py-2 rounded-md transition-all duration-200 bg-rose-500 text-white shadow-sm";
+                labelEnable.className = "flex-1 flex items-center justify-center gap-2 cursor-pointer text-sm font-medium py-2 rounded-md transition-all duration-200 text-slate-500";
+            }
+        }
+
+        function saveMerchantSettings() {
+            if (!currentEditMerchantId) return;
+            const m = merchantData.find(x => x.sysId === currentEditMerchantId);
+            if (!m) return;
+
+            m.loginUser = document.getElementById('modal-login-user').value.trim();
+            m.loginPass = document.getElementById('modal-login-pass').value;
+            m.status = document.getElementById('radio-enable').checked ? 'Enable' : 'Disable';
+
+            renderMerchantTable(merchantData);
+            closeEditModal();
+            alertSimulator(`✅ 商戶 [${m.sysId}] 設定已成功儲存！`);
+        }
+
+        // === 5. 網關與渠道 (Tab 2) ===
+
+        function renderChannelTable(data) {
+            const tbody = document.getElementById('channel-table-body');
+            const summary = document.getElementById('channel-table-summary');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (summary) summary.innerText = `Showing 1 to ${data.length} of ${channelData.length} entries`;
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="12" class="p-8 text-center text-slate-400 text-xs italic">查無符合條件之渠道資料</td></tr>`;
+                return;
+            }
+
+            data.forEach(c => {
+                const statusBadge = c.status
+                    ? `<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" title="啟用上線"></span>`
+                    : `<span class="w-2.5 h-2.5 rounded-full bg-slate-300 inline-block" title="關閉停用"></span>`;
+                const methodBadge = c.method === 'Deposit'
+                    ? `<span class="text-blue-700 bg-blue-100 px-2 py-0.5 rounded text-[10px] font-bold">存款</span>`
+                    : `<span class="text-purple-700 bg-purple-100 px-2 py-0.5 rounded text-[10px] font-bold">提款</span>`;
+                const mappedGroupsText = (c.mappedGroups && c.mappedGroups.length > 0)
+                    ? c.mappedGroups.map(g => `<span class="bg-brand-100 text-brand-700 text-[9px] px-1.5 py-0.5 rounded font-bold mr-1">${g.site}: ${g.name}</span>`).join('')
+                    : `<span class="text-slate-400 text-[10px] italic">預設 Master Pool</span>`;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors';
+                tr.innerHTML = `
+                    <td class="p-3 text-center">
+                        <button onclick="openEditGatewayModal(${c.id})" class="text-brand-600 hover:text-brand-800 p-1 rounded hover:bg-brand-50"><i class="fa-solid fa-pen-to-square"></i></button>
+                    </td>
+                    <td class="p-3 text-center">${statusBadge}</td>
+                    <td class="p-3">${methodBadge}</td>
+                    <td class="p-3 font-semibold text-slate-700">${c.gateway}</td>
+                    <td class="p-3 bg-blue-50/50 font-mono font-bold text-blue-800">${c.sysMerchant}</td>
+                    <td class="p-3 font-mono text-slate-600">${c.type}</td>
+                    <td class="p-3 bg-brand-50/50">${mappedGroupsText}</td>
+                    <td class="p-3 text-center font-bold">${c.currency}</td>
+                    <td class="p-3 text-right font-mono">${c.min.toLocaleString()}</td>
+                    <td class="p-3 text-right font-mono">${c.max.toLocaleString()}</td>
+                    <td class="p-3 text-right font-mono">${c.chargeFee.toFixed(2)}</td>
+                    <td class="p-3 text-right font-mono">${c.perCount.toFixed(2)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function handleChannelSearch() {
+            const currency = document.getElementById('filter-chan-currency').value;
+            const method = document.getElementById('filter-chan-method').value;
+            const gateway = document.getElementById('filter-chan-gateway').value;
+            const type = document.getElementById('filter-chan-type').value;
+            const status = document.getElementById('filter-chan-status').value;
+
+            const filtered = channelData.filter(c => {
+                const matchCurrency = currency === 'All' ? true : c.currency === currency;
+                const matchMethod = method === 'All' ? true : c.method === method;
+                const matchGateway = gateway === 'All' ? true : c.gateway === gateway;
+                const matchType = type === 'All' ? true : c.type === type;
+                const matchStatus = status === 'All' ? true : (status === 'Active' ? c.status === true : c.status === false);
+                return matchCurrency && matchMethod && matchGateway && matchType && matchStatus;
+            });
+
+            renderChannelTable(filtered);
+            alertSimulator(`🔍 已篩選出 ${filtered.length} 筆渠道配置資料`);
+        }
+
+        function openEditGatewayModal(channelId) {
+            const c = channelData.find(x => x.id === channelId);
+            if (!c) return;
+            currentEditChannelId = channelId;
+
+            document.getElementById('gw-modal-header-gw').innerText = `${c.gateway} (${c.sysMerchant})`;
+            document.getElementById('gw-modal-header-type').innerText = c.type;
+            document.getElementById('gw-modal-header-method').innerText = c.method;
+            document.getElementById('gw-modal-header-currency').innerText = c.currency;
+
+            document.getElementById('gw-modal-min').value = c.min;
+            document.getElementById('gw-modal-max').value = c.max;
+            document.getElementById('gw-modal-fee').value = c.chargeFee;
+            document.getElementById('gw-modal-percount').value = c.perCount;
+
+            document.getElementById('gw-modal-site-12bet').checked = c.defaultSites.includes('12bet');
+            document.getElementById('gw-modal-site-nova').checked = c.defaultSites.includes('Nova');
+            document.getElementById('gw-modal-site-bwing').checked = c.defaultSites.includes('Bwing');
+
+            const modal = document.getElementById('edit-gateway-modal');
+            const container = document.getElementById('gateway-modal-container');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            requestAnimationFrame(() => container.classList.remove('scale-95'));
+        }
+
+        function closeGatewayModal() {
+            const modal = document.getElementById('edit-gateway-modal');
+            const container = document.getElementById('gateway-modal-container');
+            container.classList.add('scale-95');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            currentEditChannelId = null;
+        }
+
+        function saveGatewaySettings() {
+            if (!currentEditChannelId) return;
+            const c = channelData.find(x => x.id === currentEditChannelId);
+            if (!c) return;
+
+            c.min = Number(document.getElementById('gw-modal-min').value);
+            c.max = Number(document.getElementById('gw-modal-max').value);
+            c.chargeFee = Number(document.getElementById('gw-modal-fee').value);
+            c.perCount = Number(document.getElementById('gw-modal-percount').value);
+
+            const sites = [];
+            if (document.getElementById('gw-modal-site-12bet').checked) sites.push('12bet');
+            if (document.getElementById('gw-modal-site-nova').checked) sites.push('Nova');
+            if (document.getElementById('gw-modal-site-bwing').checked) sites.push('Bwing');
+            c.defaultSites = sites;
+
+            syncChannelMappedGroups();
+            renderChannelTable(channelData);
+            closeGatewayModal();
+            alertSimulator(`✅ 渠道 [${c.gateway} - ${c.type}] 設定已成功更新！`);
+        }
+
+        // === 6. 商戶明細報表運算與分頁展示邏輯 (Tab 5) ===
+
+        // 明細報表多條件交叉搜尋
+        function handleReportSearch() {
+            const dateStart = document.getElementById('report-start-date').value;
+            const dateEnd = document.getElementById('report-end-date').value;
+            const sysId = document.getElementById('report-merchant-id').value;
+            const site = document.getElementById('report-site').value;
+            const direction = document.getElementById('report-direction').value;
+            const gateway = document.getElementById('report-gateway').value;
+            const type = document.getElementById('report-type').value;
+            const status = document.getElementById('report-status').value;
+            const txIdInput = document.getElementById('report-txid').value.trim().toLowerCase();
+            const groupInput = document.getElementById('report-group').value.trim().toLowerCase();
+
+            const filtered = merchantReportData.filter(item => {
+                const itemDate = item.date.split(' ')[0];
+                const matchStart = dateStart ? itemDate >= dateStart : true;
+                const matchEnd = dateEnd ? itemDate <= dateEnd : true;
+                const matchSysId = sysId === 'All' ? true : item.sysId === sysId;
+                const matchSite = site === 'All' ? true : item.site === site;
+                const matchDirection = direction === 'All' ? true : item.direction === direction;
+                const matchGateway = gateway === 'All' ? true : item.gateway === gateway;
+                const matchType = type === 'All' ? true : item.type === type;
+
+                let matchStatus = true;
+                if (status !== 'All') {
+                    if (status === 'REJECTED') {
+                        matchStatus = item.isRejected === true;
+                    } else {
+                        matchStatus = item.isRejected !== true && (
+                            (status === 'SUCCESS' && item.successCount > 0) ||
+                            (status === 'FAILED' && item.failedCount > 0) ||
+                            (status === 'PENDING' && item.status === 'Pending')
+                        );
+                    }
+                }
+
+                // 模糊單號比對
+                const actualTxId = getTransactionId(item).toLowerCase();
+                const matchTxId = txIdInput ? actualTxId.includes(txIdInput) : true;
+                const matchGroup = groupInput ? item.groupName.toLowerCase().includes(groupInput) : true;
+
+                return matchStart && matchEnd && matchSysId && matchSite && matchDirection && matchGateway && matchType && matchStatus && matchTxId && matchGroup;
+            });
+
+            renderReportView(filtered);
+            alertSimulator(`精確檢索：已篩選出 ${filtered.length} 筆交易明細金流數據！`);
+        }
+
+        // 報表數據全域 KPI 統計
+        function renderReportView(dataArray) {
+            let totalUSDPayloads = 0;
+            let totalUSDFees = 0;
+            let successCount = 0;
+            let failedCount = 0;
+            let rejectedCount = 0;
+            let totalTx = dataArray.length;
+
+            dataArray.forEach(item => {
+                const amountInUSD = getUSDEquivalent(item.successAmount, item.currency);
+                const feeInUSD = getUSDEquivalent(item.fee, item.currency);
+
+                if (item.isRejected) {
+                    rejectedCount++;
+                } else if (item.status === 'Pending') {
+                    // 處理中不計入成功與失敗筆數
+                } else if (item.successCount > 0) {
+                    successCount++;
+                    totalUSDPayloads += amountInUSD;
+                    totalUSDFees += feeInUSD;
+                } else {
+                    failedCount++;
+                }
+            });
+
+            const overallRate = totalTx > 0
+                ? ((successCount / totalTx) * 100).toFixed(2) + "%"
+                : "0.00%";
+
+            updateMetrics(totalTx, totalUSDPayloads, totalUSDFees, rejectedCount, overallRate);
+
+            // 動態分頁資料流定錨
+            reportFilteredData = dataArray;
+            reportCurrentPage = 1;
+            changeReportPage();
+        }
+
+        // 變更分頁控制
+        function changeReportPage() {
+            const totalCount = reportFilteredData.length;
+            const startIdx = (reportCurrentPage - 1) * reportPageSize;
+            const endIdx = startIdx + reportPageSize;
+            const pageData = reportFilteredData.slice(startIdx, endIdx);
+
+            renderReportTableOnly(pageData);
+
+            const startSpan = document.getElementById('report-page-start');
+            const endSpan = document.getElementById('report-page-end');
+            const totalSpan = document.getElementById('report-total-count');
+            const paginationContainer = document.getElementById('report-pagination-buttons');
+
+            if (!paginationContainer) return;
+
+            const startRecord = totalCount > 0 ? startIdx + 1 : 0;
+            const endRecord = Math.min(endIdx, totalCount);
+
+            if (startSpan) startSpan.innerText = startRecord;
+            if (endSpan) endSpan.innerText = endRecord;
+            if (totalSpan) totalSpan.innerText = totalCount;
+
+            paginationContainer.innerHTML = '';
+            const totalPages = Math.ceil(totalCount / reportPageSize);
+
+            if (totalPages <= 1) return;
+
+            // 1. 上一頁
+            const prevBtn = document.createElement('button');
+            prevBtn.className = `px-2.5 py-1.5 rounded-lg border transition-all font-semibold ${reportCurrentPage === 1 ? 'bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-300'}`;
+            prevBtn.innerHTML = `<i class="fa-solid fa-angle-left"></i>`;
+            if (reportCurrentPage > 1) {
+                prevBtn.onclick = () => {
+                    reportCurrentPage--;
+                    changeReportPage();
+                };
+            }
+            paginationContainer.appendChild(prevBtn);
+
+            // 2. 頁碼
+            for (let i = 1; i <= totalPages; i++) {
+                const pageBtn = document.createElement('button');
+                const isActive = i === reportCurrentPage;
+                pageBtn.className = `px-3 py-1.5 rounded-lg border transition-all font-semibold ${isActive ? 'bg-brand-600 text-white border-brand-600 shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-300'}`;
+                pageBtn.innerText = i;
+                pageBtn.onclick = () => {
+                    reportCurrentPage = i;
+                    changeReportPage();
+                };
+                paginationContainer.appendChild(pageBtn);
+            }
+
+            // 3. 下一頁
+            const nextBtn = document.createElement('button');
+            nextBtn.className = `px-2.5 py-1.5 rounded-lg border transition-all font-semibold ${reportCurrentPage === totalPages ? 'bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-300'}`;
+            nextBtn.innerHTML = `<i class="fa-solid fa-angle-right"></i>`;
+            if (reportCurrentPage < totalPages) {
+                nextBtn.onclick = () => {
+                    reportCurrentPage++;
+                    changeReportPage();
+                };
+            }
+            paginationContainer.appendChild(nextBtn);
+        }
+
+        // 單頁 Table Row 渲染
+        function renderReportTableOnly(pageData) {
+            const reportTableBody = document.getElementById('report-table-body');
+            if (!reportTableBody) return;
+
+            reportTableBody.innerHTML = '';
+
+            pageData.forEach(item => {
+                let itemStatus = 'PENDING';
+                if (item.isRejected) {
+                    itemStatus = 'REJECTED';
+                } else if (item.status === 'Pending') {
+                    itemStatus = 'PENDING';
+                } else if (item.successCount > 0) {
+                    itemStatus = 'SUCCESS';
+                } else {
+                    itemStatus = 'FAILED';
+                }
+
+                const pseudoTxId = getTransactionId(item);
+
+                let statusBadge = '';
+                if (itemStatus === 'SUCCESS') {
+                    statusBadge = `<span class="bg-emerald-100 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-circle-check"></i> 成功 (SUCCESS)</span>`;
+                } else if (itemStatus === 'FAILED') {
+                    statusBadge = `<span class="bg-rose-100 text-rose-800 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-circle-xmark"></i> 失敗 (FAILED)</span>`;
+                } else if (itemStatus === 'PENDING') {
+                    statusBadge = `<span class="bg-amber-100 text-amber-800 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-spinner animate-spin"></i> 處理中</span>`;
+                } else {
+                    statusBadge = `<span class="bg-slate-200 text-slate-700 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-ban"></i> 熔斷 (REJECTED)</span>`;
+                }
+
+                // DEP/WDL 彩色交易方向徽章
+                const typeBadge = item.direction === 'Deposit'
+                    ? `<span class="text-blue-700 bg-blue-100 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fa-solid fa-arrow-down-long"></i> 存款 (DEP)</span>`
+                    : `<span class="text-purple-700 bg-purple-100 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fa-solid fa-arrow-up-long"></i> 提款 (WDL)</span>`;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors text-xs font-mono';
+                tr.innerHTML = `
+                    <td class="p-3 text-slate-500">${item.date}</td>
+                    <td class="p-3 font-bold text-slate-700">${pseudoTxId}</td>
+                    <td class="p-3"><span class="bg-slate-100 text-slate-800 text-[10px] px-1.5 py-0.5 rounded font-bold">${item.site}</span></td>
+                    <td class="p-3 text-center">${typeBadge}</td>
+                    <td class="p-3 text-brand-700 font-bold font-sans">${item.groupName}</td>
+                    <td class="p-3 font-bold text-slate-800">${item.sysId}</td>
+                    <td class="p-3 text-slate-700 font-semibold">${item.gateway}</td>
+                    <td class="p-3 text-slate-600 font-mono">${item.type}</td>
+                    <td class="p-3 text-right font-bold text-slate-900">${item.successAmount.toLocaleString()} ${item.currency}</td>
+                    <td class="p-3 text-right text-rose-600">$${item.fee.toLocaleString()}</td>
+                    <td class="p-3 text-center">${statusBadge}</td>
+                `;
+                reportTableBody.appendChild(tr);
+            });
+        }
+
+        // CSV 資料導出
+        function exportReportToCSV() {
+            const dateStart = document.getElementById('report-start-date').value;
+            const dateEnd = document.getElementById('report-end-date').value;
+            const sysId = document.getElementById('report-merchant-id').value;
+            const site = document.getElementById('report-site').value;
+            const direction = document.getElementById('report-direction').value;
+            const gateway = document.getElementById('report-gateway').value;
+            const type = document.getElementById('report-type').value;
+            const status = document.getElementById('report-status').value;
+            const txIdInput = document.getElementById('report-txid').value.trim().toLowerCase();
+            const groupInput = document.getElementById('report-group').value.trim().toLowerCase();
+
+            const filtered = merchantReportData.filter(item => {
+                const itemDate = item.date.split(' ')[0];
+                const matchStart = dateStart ? itemDate >= dateStart : true;
+                const matchEnd = dateEnd ? itemDate <= dateEnd : true;
+                const matchSysId = sysId === 'All' ? true : item.sysId === sysId;
+                const matchSite = site === 'All' ? true : item.site === site;
+                const matchDirection = direction === 'All' ? true : item.direction === direction;
+                const matchGateway = gateway === 'All' ? true : item.gateway === gateway;
+                const matchType = type === 'All' ? true : item.type === type;
+
+                let matchStatus = true;
+                if (status !== 'All') {
+                    if (status === 'REJECTED') {
+                        matchStatus = item.isRejected === true;
+                    } else {
+                        matchStatus = item.isRejected !== true && ((status === 'SUCCESS' && item.successCount > 0) || (status === 'FAILED' && item.failedCount > 0) || (status === 'PENDING' && item.status === 'Pending'));
+                    }
+                }
+
+                const pseudoTxId = getTransactionId(item).toLowerCase();
+                const matchTxId = txIdInput ? pseudoTxId.includes(txIdInput) : true;
+                const matchGroup = groupInput ? item.groupName.toLowerCase().includes(groupInput) : true;
+
+                return matchStart && matchEnd && matchSysId && matchSite && matchDirection && matchGateway && matchType && matchStatus && matchTxId && matchGroup;
+            });
+
+            if (filtered.length === 0) {
+                alertSimulator("❌ 查無可用於導出的數據。");
+                return;
+            }
+
+            let csvContent = "﻿"; // UTF-8 BOM
+            csvContent += "交易時間,系統交易單號,來源站點,交易類型,3.0策略群組,實際商戶編號,網關,渠道類型,結算金額,結算幣別,通道手續費,交易狀態\n";
+            filtered.forEach(item => {
+                const pseudoTxId = getTransactionId(item);
+                let itemStatus = 'PENDING';
+                if (item.isRejected) itemStatus = 'REJECTED';
+                else if (item.status === 'Pending') itemStatus = 'PENDING';
+                else if (item.successCount > 0) itemStatus = 'SUCCESS';
+                else itemStatus = 'FAILED';
+
+                const safeTxId = `'${pseudoTxId}`;
+                const safeDirection = item.direction === 'Deposit' ? '存款 (DEP)' : '提款 (WDL)';
+                csvContent += `"${item.date}","${safeTxId}","${item.site}","${safeDirection}","${item.groupName}","${item.sysId}","${item.gateway}","${item.type}",${item.successAmount},"${item.currency}",${item.fee},"${itemStatus}"\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `merchant_ledger_report_${new Date().toISOString().slice(0,10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            alertSimulator("📥 已成功匯出明細 CSV 報表檔！");
+        }
+
+
+        // === 7. 智慧分群與渠道對應核心邏輯 (Tab 3) ===
+
+        function getActiveSite() {
+            const el = document.getElementById('rule-site-filter');
+            return el ? el.value : '12bet';
+        }
+
+        function getActiveCurrency() {
+            const el = document.getElementById('rule-currency-filter');
+            return el ? el.value : 'THB';
+        }
+
+        // 判斷某渠道在「此站點」的情境下是否已被指派至某個自訂群組（同一實體渠道可分別在不同站點下歸類）
+        function getDefaultChannelsForSiteAndCurrency(site, currency) {
+            return channelData.filter(c => {
+                if (!c.status || c.currency !== currency || !c.defaultSites.includes(site)) return false;
+                const assignedInThisContext = (c.mappedGroups || []).some(g => g.site === site);
+                return !assignedInThisContext;
+            });
+        }
+
+        function isGroupOfCurrentContext(groupCode, site, currency) {
+            if (!groupCode) return false;
+            const rg = ruleGroups.find(r => r.id === groupCode);
+            return !!rg && rg.site === site && rg.currency === currency;
+        }
+
+        function handleRuleFilterChange() {
+            renderRuleGroupsList();
+            const site = getActiveSite();
+            const currency = getActiveCurrency();
+            const groupListTitle = document.getElementById('group-list-title');
+            if (groupListTitle) groupListTitle.innerText = `${site} (${currency}) 渠道與分群對照`;
+            selectDefaultPoolView();
+        }
+
+        function renderRuleGroupsList() {
+            const container = document.getElementById('rule-groups-list-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const selectedSite = getActiveSite();
+            const selectedCurrency = getActiveCurrency();
+
+            // A. Master Pool 看板
+            const defaultChans = getDefaultChannelsForSiteAndCurrency(selectedSite, selectedCurrency);
+            const isDefaultActive = selectedGroupId === 'VIRTUAL_DEFAULT_POOL';
+            const defaultCard = document.createElement('div');
+            defaultCard.className = `p-3 rounded-xl border cursor-pointer transition-all ${isDefaultActive ? 'border-brand-500 bg-brand-50/50 shadow-sm' : 'border-slate-200 hover:bg-slate-50'}`;
+            defaultCard.onclick = () => selectDefaultPoolView();
+            defaultCard.innerHTML = `
+                <div class="flex justify-between items-center mb-1">
+                    <span class="font-bold text-blue-900 text-xs flex items-center gap-1.5"><i class="fa-solid fa-box-archive"></i> 預設選項 (Master Pool)</span>
+                    <span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-lg border border-blue-200">${defaultChans.length} 個可用渠道</span>
+                </div>
+                <p class="text-[10px] text-slate-400 leading-relaxed">賸餘未被歸類的全局基礎渠道名單</p>
+            `;
+            container.appendChild(defaultCard);
+
+            // B. 自訂策略群組
+            const filtered = ruleGroups.filter(r => r.site === selectedSite && r.currency === selectedCurrency);
+            filtered.forEach(rg => {
+                const isActive = rg.id === selectedGroupId;
+                const activeClasses = isActive ? 'border-brand-300 bg-brand-50/50 shadow-sm' : 'border-slate-200 hover:bg-slate-50';
+
+                const div = document.createElement('div');
+                div.className = `p-3 rounded-xl border cursor-pointer transition-all ${activeClasses}`;
+                div.onclick = () => selectRuleGroup(rg.id);
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-slate-800 text-xs">${rg.aliasName}</span>
+                        <span class="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-lg border border-emerald-100 flex items-center gap-1">
+                           <i class="fa-solid fa-link"></i> ${rg.assignedChannels.length} 個渠道
+                        </span>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-slate-400 mt-1 font-mono">
+                        <span>代碼：${rg.id}</span>
+                        <span class="font-bold text-slate-500">${rg.currency}</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function selectDefaultPoolView() {
+            selectedGroupId = 'VIRTUAL_DEFAULT_POOL';
+            ruleGroupDraft = null;
+            renderRuleGroupsList();
+
+            const site = getActiveSite();
+            const currency = getActiveCurrency();
+
+            const curIdEl = document.getElementById('rule-current-id');
+            const aliasNameEl = document.getElementById('rule-alias-name');
+            const siteReadEl = document.getElementById('rule-site-readonly');
+            const currReadEl = document.getElementById('rule-currency-readonly');
+            const deleteBtn = document.getElementById('btn-delete-group');
+
+            if (curIdEl) curIdEl.innerText = 'MASTER_POOL';
+            if (aliasNameEl) {
+                aliasNameEl.value = '預設選項池';
+                aliasNameEl.readOnly = true;
+            }
+            if (siteReadEl) siteReadEl.value = site;
+            if (currReadEl) currReadEl.value = currency;
+            if (deleteBtn) deleteBtn.style.display = 'none';
+
+            const addChanBox = document.getElementById('add-channel-to-group-box');
+            const actButtonsBox = document.getElementById('action-buttons-box');
+            const filterControls = document.getElementById('filter-sort-controls');
+            const assignedLabel = document.getElementById('assigned-table-label');
+            const mainTitle = document.getElementById('main-panel-title');
+            const mainSubtitle = document.getElementById('main-panel-subtitle');
+
+            if (addChanBox) addChanBox.style.display = 'none';
+            if (actButtonsBox) actButtonsBox.style.display = 'none';
+            if (filterControls) filterControls.style.display = 'none';
+            if (assignedLabel) assignedLabel.innerText = `目前預設選項內包含的渠道明細：`;
+            if (mainTitle) mainTitle.innerText = '預設選項渠道清單 (Master Pool)';
+            if (mainSubtitle) mainSubtitle.innerText = '展示此站點當前未被指派到任何自訂群組的賸餘可用金流渠道';
+
+            const tableHeader = document.getElementById('assigned-table-header');
+            if (tableHeader) {
+                tableHeader.innerHTML = `
+                    <th class="p-3">渠道名稱 / 類型</th>
+                    <th class="p-3 text-right">預設最低限額 (Min)</th>
+                    <th class="p-3 text-right">預設最高限額 (Max)</th>
+                `;
+            }
+
+            const defaultChans = getDefaultChannelsForSiteAndCurrency(site, currency);
+            const tbody = document.getElementById('assigned-channels-table-body');
+            if (tbody) {
+                tbody.innerHTML = '';
+                if (defaultChans.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-xs text-slate-400 italic"><i class="fa-solid fa-box-open text-lg block mb-1"></i>預設選項清單已空（所有適用渠道皆已被分配到下方自訂群組中）</td></tr>`;
+                } else {
+                    defaultChans.forEach(chan => {
+                        const tr = document.createElement('tr');
+                        tr.className = 'hover:bg-slate-50 transition-colors opacity-90';
+                        tr.innerHTML = `
+                            <td class="p-3">
+                                <div class="font-bold text-slate-700 flex items-center gap-1.5"><span class="bg-blue-100 text-blue-800 text-[9px] px-1.5 py-0.5 rounded uppercase font-mono font-bold">${chan.type}</span><span>${chan.gateway}</span></div>
+                                <div class="text-[10px] text-slate-400 font-mono mt-0.5">商戶: ${chan.sysMerchant} | 費率: ${chan.chargeFee}% + $${chan.perCount}</div>
+                            </td>
+                            <td class="p-3 text-right font-mono text-slate-600 font-bold">$${chan.min}</td>
+                            <td class="p-3 text-right font-mono text-slate-600 font-bold">$${chan.max}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            }
+            const addChanSelect = document.getElementById('rule-add-channel-select');
+            if (addChanSelect) addChanSelect.innerHTML = '<option>不分群站點直接使用全局物理渠道</option>';
+            const builderPanel = document.getElementById('rule-builder-panel');
+            if (builderPanel) builderPanel.style.opacity = '0.85';
+        }
+
+        function selectRuleGroup(id) {
+            selectedGroupId = id;
+            renderRuleGroupsList();
+
+            const addChanBox = document.getElementById('add-channel-to-group-box');
+            const actButtonsBox = document.getElementById('action-buttons-box');
+            const filterControls = document.getElementById('filter-sort-controls');
+            const aliasNameInput = document.getElementById('rule-alias-name');
+            const assignedLabel = document.getElementById('assigned-table-label');
+            const mainTitle = document.getElementById('main-panel-title');
+            const mainSubtitle = document.getElementById('main-panel-subtitle');
+            const deleteBtn = document.getElementById('btn-delete-group');
+            const builderPanel = document.getElementById('rule-builder-panel');
+
+            if (addChanBox) addChanBox.style.display = 'block';
+            if (actButtonsBox) actButtonsBox.style.display = 'flex';
+            if (filterControls) filterControls.style.display = 'flex';
+            if (aliasNameInput) aliasNameInput.readOnly = false;
+            if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+            if (builderPanel) builderPanel.style.opacity = '1';
+
+            if (mainTitle) mainTitle.innerText = '自訂群組渠道歸類管理';
+            if (mainSubtitle) mainSubtitle.innerText = '手動從預設選項中挪用、指派特定渠道放入此群組';
+            if (assignedLabel) assignedLabel.innerText = `已指派渠道名單 (Assigned Channels)`;
+
+            const tableHeader = document.getElementById('assigned-table-header');
+            if (tableHeader) {
+                tableHeader.innerHTML = `
+                    <th class="p-3">渠道名稱 / 類型</th>
+                    <th class="p-3 text-center w-24">操作</th>
+                `;
+            }
+
+            const rg = ruleGroups.find(r => r.id === id);
+            if (rg) {
+                ruleGroupDraft = JSON.parse(JSON.stringify(rg));
+                loadRuleIntoBuilder();
+            }
+        }
+
+        function loadRuleIntoBuilder() {
+            if (!ruleGroupDraft) return;
+            const curIdEl = document.getElementById('rule-current-id');
+            const aliasInput = document.getElementById('rule-alias-name');
+            const siteReadEl = document.getElementById('rule-site-readonly');
+            const currReadEl = document.getElementById('rule-currency-readonly');
+
+            if (curIdEl) curIdEl.innerText = ruleGroupDraft.id;
+            if (aliasInput) {
+                aliasInput.value = ruleGroupDraft.aliasName;
+                aliasInput.readOnly = false;
+            }
+            if (siteReadEl) siteReadEl.value = ruleGroupDraft.site;
+            if (currReadEl) currReadEl.value = ruleGroupDraft.currency;
+
+            renderAssignedChannelsTable(ruleGroupDraft);
+            populateAvailableChannelsDropdown(ruleGroupDraft);
+        }
+
+        function renderAssignedChannelsTable(rg) {
+            const tbody = document.getElementById('assigned-channels-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            let channelsToRender = [...rg.assignedChannels].map(ac => {
+                const chan = channelData.find(c => c.id === ac.channelId);
+                return { ac, chan };
+            }).filter(item => item.chan !== undefined);
+
+            if (assignedFilterType !== 'All') channelsToRender = channelsToRender.filter(item => item.chan.type === assignedFilterType);
+            if (assignedSortOrder === 'Type') channelsToRender.sort((a, b) => a.chan.type.localeCompare(b.chan.type));
+            else channelsToRender.sort((a, b) => a.chan.gateway.localeCompare(b.chan.gateway));
+
+            if (channelsToRender.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="2" class="p-8 text-center text-xs text-slate-400 italic">目前無指派渠道。請利用下方選單將預設渠道劃分歸類至本群組</td></tr>`;
+                return;
+            }
+
+            channelsToRender.forEach((item) => {
+                const chan = item.chan;
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors';
+                tr.innerHTML = `
+                    <td class="p-3">
+                        <div class="font-bold text-slate-700 flex items-center gap-1.5"><span class="bg-blue-100 text-blue-800 text-[9px] px-1.5 py-0.5 rounded uppercase font-mono font-bold">${chan.type}</span><span>${chan.gateway}</span></div>
+                        <div class="text-[10px] text-slate-400 font-mono mt-0.5">商戶: ${chan.sysMerchant} | 基準: $${chan.min} ~ $${chan.max} | 費率: ${chan.chargeFee}%</div>
+                    </td>
+                    <td class="p-3 text-center">
+                        <button type="button" onclick="removeChannelFromGroup(${chan.id})" class="text-slate-400 hover:text-rose-600 transition-colors p-1 text-sm"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function populateAvailableChannelsDropdown(rg) {
+            const typeFilter = document.getElementById('rule-add-type-filter').value;
+            const select = document.getElementById('rule-add-channel-select');
+            if (!select) return;
+            select.innerHTML = '';
+
+            const assignedIds = rg.assignedChannels.map(ac => ac.channelId);
+            let availableChannels = getDefaultChannelsForSiteAndCurrency(rg.site, rg.currency)
+                .filter(c => !assignedIds.includes(c.id));
+            if (typeFilter !== 'All') availableChannels = availableChannels.filter(c => c.type === typeFilter);
+
+            if (availableChannels.length === 0) {
+                select.innerHTML = '<option value="">預設池中無符合此類型的賸餘渠道</option>';
+                return;
+            }
+
+            availableChannels.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.innerText = `[${c.type}] ${c.gateway} (${c.sysMerchant}) - 預設限額: ${c.min}~${c.max}`;
+                select.appendChild(opt);
+            });
+        }
+
+        function filterAvailableChannelsDropdown() {
+            if (ruleGroupDraft) populateAvailableChannelsDropdown(ruleGroupDraft);
+        }
+
+        function addChannelToCurrentGroup() {
+            if (!ruleGroupDraft) return;
+            const select = document.getElementById('rule-add-channel-select');
+            if (!select) return;
+            const channelId = Number(select.value);
+            if (!channelId) return;
+
+            const chan = channelData.find(c => c.id === channelId);
+            if (!chan) return;
+
+            ruleGroupDraft.assignedChannels.push({ channelId: channelId });
+            renderAssignedChannelsTable(ruleGroupDraft);
+            populateAvailableChannelsDropdown(ruleGroupDraft);
+        }
+
+        function removeChannelFromGroup(chanId) {
+            if (!ruleGroupDraft) return;
+            ruleGroupDraft.assignedChannels = ruleGroupDraft.assignedChannels.filter(ac => ac.channelId !== chanId);
+            renderAssignedChannelsTable(ruleGroupDraft);
+            populateAvailableChannelsDropdown(ruleGroupDraft);
+        }
+
+        function revertRuleForm() {
+            if (selectedGroupId && selectedGroupId !== 'VIRTUAL_DEFAULT_POOL') {
+                const rg = ruleGroups.find(r => r.id === selectedGroupId);
+                if (rg) {
+                    ruleGroupDraft = JSON.parse(JSON.stringify(rg));
+                    loadRuleIntoBuilder();
+                    alertSimulator("🔄 已還原群組設定至最後儲存狀態！");
+                }
+            }
+        }
+
+        function deleteCurrentGroup() {
+            if (selectedGroupId === 'VIRTUAL_DEFAULT_POOL') return;
+            const rg = ruleGroups.find(r => r.id === selectedGroupId);
+            if (!rg) return;
+
+            const groupName = rg.aliasName;
+            ruleGroups = ruleGroups.filter(r => r.id !== selectedGroupId);
+
+            tagBindings.forEach(tb => {
+                if (tb.groupCode === selectedGroupId) {
+                    tb.groupCode = '';
+                }
+            });
+
+            alertSimulator(`🗑️ 已成功刪除 [${groupName}] 自訂金流群組！`);
+            syncChannelMappedGroups();
+            handleRuleFilterChange();
+        }
+
+        function addNewGroupShell() {
+            const site = getActiveSite();
+            const currency = getActiveCurrency();
+            let seq = ruleGroups.length + 1;
+            let newId = 'RULE_GRP_' + String(seq).padStart(3, '0');
+            while (ruleGroups.some(r => r.id === newId)) {
+                seq++;
+                newId = 'RULE_GRP_' + String(seq).padStart(3, '0');
+            }
+            const newGroup = { id: newId, aliasName: `新群組_${newId}`, site, currency, assignedChannels: [] };
+            ruleGroups.push(newGroup);
+            selectRuleGroup(newId);
+            renderRuleGroupsList();
+            alertSimulator(`✅ 已建立新群組 [${newGroup.aliasName}]，請設定名稱並指派渠道`);
+        }
+
+        function saveRuleForm() {
+            if (!ruleGroupDraft) return;
+
+            const newName = document.getElementById('rule-alias-name').value.trim();
+            if (!newName) { alertSimulator("❌ 群組名稱不得為空！"); return; }
+            ruleGroupDraft.aliasName = newName;
+
+            const idx = ruleGroups.findIndex(r => r.id === ruleGroupDraft.id);
+            if (idx !== -1) {
+                ruleGroups[idx] = JSON.parse(JSON.stringify(ruleGroupDraft));
+            }
+
+            syncChannelMappedGroups();
+            renderRuleGroupsList();
+            renderChannelTable(channelData);
+            alertSimulator("🎉 成功儲存渠道歸類配置！");
+        }
+
+        function filterAssignedTable(type) {
+            assignedFilterType = type;
+            const filters = ['All', 'OnlineBanking', 'MobilePayment', 'LoadCard'];
+            const filterIds = { All: 'btn-filter-all', OnlineBanking: 'btn-filter-ob', MobilePayment: 'btn-filter-mp', LoadCard: 'btn-filter-lc' };
+            filters.forEach(f => {
+                const el = document.getElementById(filterIds[f]);
+                if (el) el.className = f === type ? "px-2.5 py-1 rounded-md bg-white text-slate-800 font-bold shadow-sm" : "px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-800";
+            });
+            if (ruleGroupDraft) renderAssignedChannelsTable(ruleGroupDraft);
+        }
+
+        function toggleAssignedSort() {
+            assignedSortOrder = assignedSortOrder === 'Type' ? 'Gateway' : 'Type';
+            const sortLabel = document.getElementById('sort-btn-label');
+            if (sortLabel) sortLabel.innerText = assignedSortOrder === 'Type' ? '按類型排序' : '按網關排序';
+            if (ruleGroupDraft) renderAssignedChannelsTable(ruleGroupDraft);
+        }
+
+
+        // === 8. B2C 貼標沙盒模擬器 (Tab 4) ===
+
+        let simulatedB2CResult = { tag: '無符合標籤', code: '[]' };
+
+        function renderB2CMemberDropdown() {
+            const select = document.getElementById('b2c-member-select');
+            if (!select) return;
+            select.innerHTML = '';
+            b2cMembers.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.innerText = `${m.name} (${m.site} - ${m.currency})`;
+                select.appendChild(opt);
+            });
+        }
+
+        function loadB2CMemberTraits() {
+            const select = document.getElementById('b2c-member-select');
+            if (!select) return;
+            selectedB2CMemberId = select.value;
+
+            const member = b2cMembers.find(m => m.id === selectedB2CMemberId);
+            if (!member) return;
+
+            document.getElementById('display-member-site').innerText = member.site;
+            document.getElementById('display-member-currency').innerText = member.currency;
+            document.getElementById('display-member-vip').innerText = member.vip;
+            document.getElementById('display-member-reg').innerText = member.regDays + " 天";
+            document.getElementById('display-member-ip').innerText = member.ipCountry;
+            document.getElementById('display-member-dep').innerText = member.depositCount + " 次";
+            document.getElementById('display-member-time').innerText = member.time;
+
+            const siteEl = document.getElementById('rule-site-filter');
+            const currencyEl = document.getElementById('rule-currency-filter');
+            if (siteEl) siteEl.value = member.site;
+            if (currencyEl) currencyEl.value = member.currency;
+
+            renderTagBindingTable();
+            populate30GroupDropdownForB2C();
+            runB2CInternalSegmentation();
+        }
+
+        function renderTagBindingTable() {
+            const tbody = document.getElementById('tag-bindings-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const activeSite = getActiveSite();
+            const activeCurrency = getActiveCurrency();
+
+            if (tagBindings.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-xs text-slate-500 italic font-sans">無任何標籤綁定。請於下方新增。</td></tr>`;
+                return;
+            }
+
+            tagBindings.forEach((tb, index) => {
+                const isCurrentContext = isGroupOfCurrentContext(tb.groupCode, activeSite, activeCurrency);
+                const groupObj = ruleGroups.find(rg => rg.id === tb.groupCode);
+                const groupLabel = groupObj ? `${tb.groupCode} (${groupObj.aliasName})` : (tb.groupCode ? tb.groupCode : '<span class="text-rose-500 font-bold">❌ 未綁定</span>');
+
+                const tr = document.createElement('tr');
+                tr.className = `border-b hover:bg-slate-50 ${isCurrentContext ? 'bg-blue-50/40 font-bold' : 'opacity-65'}`;
+                tr.innerHTML = `
+                    <td class="p-2.5 font-bold ${isCurrentContext ? 'text-blue-700' : 'text-slate-500'}">${tb.tag}</td>
+                    <td class="p-2.5 text-slate-800 text-xs">${groupLabel}</td>
+                    <td class="p-2.5 text-center">
+                        <button onclick="deleteTagBinding(${index})" class="text-slate-400 hover:text-rose-600 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function deleteTagBinding(index) {
+            const tb = tagBindings[index];
+            tagBindings.splice(index, 1);
+            renderTagBindingTable();
+            runB2CInternalSegmentation();
+            alertSimulator(`🗑️ 已解除 B2C 標籤 [${tb.tag}] 的 3.0 綁定關係！`);
+        }
+
+        function saveNewTagBinding() {
+            const tagInput = document.getElementById('add-tag-name');
+            const groupSelect = document.getElementById('add-b2c-mapping-code');
+            if (!tagInput || !groupSelect) return;
+
+            const tag = tagInput.value.trim().toUpperCase();
+            const groupCode = groupSelect.value;
+
+            if (!tag || !groupCode) {
+                alertSimulator("❌ 請輸入自訂標籤名稱並選擇欲綁定的 3.0 群組！");
+                return;
+            }
+
+            const existingIdx = tagBindings.findIndex(tb => tb.tag === tag);
+            if (existingIdx !== -1) {
+                tagBindings[existingIdx].groupCode = groupCode;
+                alertSimulator(`🔄 平台標籤 [${tag}] 已更新綁定對應群組為 [${groupCode}]`);
+            } else {
+                tagBindings.push({ tag: tag, groupCode: groupCode });
+                alertSimulator(`🎉 成功建立 1:1 綁定！ 標籤: [${tag}] ➔ 群組: [${groupCode}]`);
+            }
+
+            tagInput.value = '';
+            renderTagBindingTable();
+            runB2CInternalSegmentation();
+        }
+
+        function populate30GroupDropdownForB2C() {
+            const mappingSelect = document.getElementById('add-b2c-mapping-code');
+            if (!mappingSelect) return;
+            mappingSelect.innerHTML = '';
+
+            const activeSite = getActiveSite();
+            const activeCurrency = getActiveCurrency();
+            const filtered = ruleGroups.filter(rg => rg.site === activeSite && rg.currency === activeCurrency);
+
+            if (filtered.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = "";
+                opt.innerText = "❌ 此站點/幣別無 3.0 群組 (請先至群組管理建立)";
+                mappingSelect.appendChild(opt);
+                return;
+            }
+
+            filtered.forEach(rg => {
+                const opt = document.createElement('option');
+                opt.value = rg.id;
+                opt.innerText = `${rg.id} (${rg.aliasName})`;
+                mappingSelect.appendChild(opt);
+            });
+        }
+
+        function runB2CInternalSegmentation() {
+            const member = b2cMembers.find(m => m.id === selectedB2CMemberId);
+            if (!member) return;
+
+            if (member.site === 'Bwing') {
+                simulatedB2CResult = { tag: '無特定標籤 (通用常規流)', code: '[]' };
+                updateLabelDisplay(simulatedB2CResult.tag, '[] (空陣列)', true);
+                return;
+            }
+
+            const activeSite = member.site;
+            const activeCurrency = member.currency;
+
+            const siteRules = b2cRules.filter(r => r.site === activeSite && r.currency === activeCurrency);
+            let matchedRule = null;
+
+            for (let rule of siteRules) {
+                let isMatch = true;
+                const conds = rule.conditions;
+
+                if (conds.vipMin !== undefined && member.vip < conds.vipMin) isMatch = false;
+                if (conds.regDaysMin !== undefined && member.regDays < conds.regDaysMin) isMatch = false;
+                if (conds.regDaysMax !== undefined && member.regDays > conds.regDaysMax) isMatch = false;
+                if (conds.depositCountMax !== undefined && member.depositCount > conds.depositCountMax) isMatch = false;
+                if (conds.ipCountryNot !== undefined && member.ipCountry === conds.ipCountryNot) isMatch = false;
+                if (conds.timeStart !== undefined) {
+                    if (member.time < conds.timeStart || member.time > conds.timeEnd) isMatch = false;
+                }
+
+                if (isMatch) {
+                    matchedRule = rule;
+                    break;
+                }
+            }
+
+            if (matchedRule) {
+                const resolvedTag = matchedRule.tag;
+                const binding = tagBindings.find(tb => tb.tag === resolvedTag);
+                const boundGroupCode = binding ? binding.groupCode : '';
+
+                simulatedB2CResult = {
+                    tag: resolvedTag,
+                    code: boundGroupCode ? boundGroupCode : '[]'
+                };
+
+                updateLabelDisplay(resolvedTag, boundGroupCode ? `["${boundGroupCode}"]` : '[] (未對應綁定)', false);
+            } else {
+                simulatedB2CResult = { tag: '無符合特徵 (常規流量)', code: '[]' };
+                updateLabelDisplay(simulatedB2CResult.tag, '[] (空陣列)', true);
+            }
+        }
+
+        function updateLabelDisplay(tagText, codeText, isDefault) {
+            const labelTag = document.getElementById('simulated-matched-b2c-tag');
+            const labelCode = document.getElementById('simulated-transmitted-group-code');
+
+            if (labelTag) {
+                labelTag.innerText = tagText;
+                labelTag.className = isDefault
+                    ? "text-slate-500 font-bold text-xs bg-slate-100 px-2 py-0.5 rounded animate-pulse"
+                    : "text-emerald-700 font-extrabold font-mono text-xs bg-emerald-100 px-2.5 py-1 rounded shadow-sm";
+            }
+            if (labelCode) {
+                labelCode.innerText = codeText;
+                labelCode.className = (isDefault || codeText.includes('未對應'))
+                    ? "text-slate-400 font-bold font-mono text-xs"
+                    : "text-amber-400 font-bold font-mono text-xs";
+            }
+        }
+
+        function simB2CTagDisplay() {
+            return simulatedB2CResult.tag;
+        }
+
+        function simB2CGroupIdTransmitted() {
+            return simulatedB2CResult.code === '[]' ? '[]' : `["${simulatedB2CResult.code}"]`;
+        }
+
+        function runB2CUnifiedSimulation() {
+            const simAmountEl = document.getElementById('sim-amount');
+            if (!simAmountEl) return;
+            const simAmount = Number(simAmountEl.value);
+
+            const terminal = document.getElementById('sim-terminal');
+            if (!terminal) return;
+            terminal.innerHTML = '';
+
+            function log(text, type = 'info') {
+                const span = document.createElement('div');
+                span.className = type === 'success' ? 'text-emerald-400 font-bold' : (type === 'match' ? 'text-amber-400 font-bold' : (type === 'error' ? 'text-rose-500 font-bold' : 'text-slate-300'));
+                span.innerHTML = `[${new Date().toLocaleTimeString()}] ${text}`;
+                terminal.appendChild(span);
+                terminal.scrollTop = terminal.scrollHeight;
+            }
+
+            const member = b2cMembers.find(m => m.id === selectedB2CMemberId);
+            if (!member) {
+                log("🚨 未選擇模擬 B2C 會員帳號！", "error");
+                return;
+            }
+
+            runB2CInternalSegmentation();
+
+            log(`📥 [B2C 平台端發起充值] 玩家: <span class="text-emerald-400 font-bold">${member.name}</span> | 歸屬: <span class="text-blue-300">${member.site}</span> | 金額: <span class="text-white">$${simAmount} ${member.currency}</span>`, 'info');
+            log(`⚖  [B2C 平台 1:1 直對映射] 貼上特定單一標籤: <span class="text-emerald-400 font-bold">${simB2CTagDisplay()}</span>`, 'match');
+            log(`🌐 --- [API 數據解耦] 僅向 3.0 透傳已解析之唯一 GroupCode: <span class="text-amber-400 font-bold">${simB2CGroupIdTransmitted()}</span> ---`, 'info');
+
+            log(`📥 [3.0 接收 API 請求] 來源站點: <span class="text-blue-400">${member.site}</span> | 幣別: <span class="text-blue-400 font-bold">${member.currency}</span> | 金額: <span class="text-white">$${simAmount}</span>`);
+
+            const transmittedCode = simulatedB2CResult.code;
+
+            if (transmittedCode === '[]' || !transmittedCode) {
+                log(`📡 接收 clientGroupIds: <span class="text-slate-500">[] (走向常規預設路由 Master Pool)</span>`);
+
+                let defaultChans = getDefaultChannelsForSiteAndCurrency(member.site, member.currency);
+                log(`💡 [常規路由模式] 實時互斥計算：自動扣除被其餘自訂群組歸類佔用的通道，當前預設 pool 賸餘可用渠道計 <span class="text-blue-300 font-bold">${defaultChans.length}</span> 個：`, 'match');
+
+                let finalRoutedChannels = [];
+                defaultChans.forEach(chan => {
+                    log(`  ℹ️ 渠道 [${chan.gateway}] 採用本體預設物理限額: $${chan.min} ~ $${chan.max} | 費率: ${chan.chargeFee}%`);
+                    if (simAmount >= chan.min && simAmount <= chan.max) {
+                        finalRoutedChannels.push(chan);
+                        log(`  ✅ [預設池直通] 渠道 [${chan.gateway} - ${chan.type}] 匹配通過`, 'success');
+                    } else {
+                        log(`  ⚠️ [限額阻擋] 超出此渠道物理限額`, 'error');
+                    }
+                });
+                outputFinalRoutedResult(finalRoutedChannels, member.site, log);
+                return;
+            }
+
+            log(`📡 接收 clientGroupIds: <span class="text-amber-400 font-bold">["${transmittedCode}"]</span>`);
+            const matchedGroup = ruleGroups.find(r => r.site === member.site && r.currency === member.currency && r.id === transmittedCode);
+
+            if (!matchedGroup) {
+                log(`🚨 [金流熔斷] 3.0 策略庫中找不到適用於該平台此代碼的配置！`, 'error');
+                return;
+            }
+
+            log(`🎯 [智慧查表匹配] 定位 3.0 策略群組 [ ${matchedGroup.aliasName} ]，包含 ${matchedGroup.assignedChannels.length} 個歸類渠道。`, 'match');
+            let finalRoutedChannels = [];
+
+            matchedGroup.assignedChannels.forEach(ac => {
+                const chan = channelData.find(c => c.id === ac.channelId);
+                if (!chan || !chan.status || chan.currency !== member.currency) return;
+
+                log(`  ℹ  渠道 [${chan.gateway}] 物理基準限額：$${chan.min} ~ $${chan.max} (手續費率: ${chan.chargeFee}%)`);
+                if (simAmount >= chan.min && simAmount <= chan.max) {
+                    finalRoutedChannels.push({ gateway: chan.gateway, sysMerchant: chan.sysMerchant, type: chan.type, min: chan.min, max: chan.max });
+                    log(`  ✅ [歸類渠道通過] 渠道 [${chan.gateway}] 併入可用清單`, 'success');
+                } else {
+                    log(`  ⚠️ [限額阻擋] 超出此分群渠道之物理限額`, 'error');
+                }
+            });
+
+            outputFinalRoutedResult(finalRoutedChannels, member.site, log);
+        }
+
+        function outputFinalRoutedResult(finalChans, simSite, log) {
+            if (finalChans.length > 0) {
+                log("🚀 [中央路由完成] 成功向 [" + simSite + "] 回傳 " + finalChans.length + " 組可用支付管道：", 'success');
+                finalChans.forEach(fc => log(`  ├─ 管道: <span class="text-emerald-400 font-bold">${fc.gateway} (${fc.sysMerchant})</span> | 適用物理限額: <span class="text-emerald-300 font-mono">$${fc.min} ~ $${fc.max}</span>`, 'success'));
+            } else {
+                log(`🚨 [金流熔斷] 此交易無匹配可用渠道，3.0 中央攔截回傳熔斷拒絕代碼！`, 'error');
+            }
+        }
+
+        // === 9. 全域初始化載入 ===
+        window.onload = function() {
+            syncChannelMappedGroups();
+            renderMerchantTable(merchantData);
+            renderChannelTable(channelData);
+            switchTab('wf-merchant');
+        };
+    </script>
+</body>
+</html>
