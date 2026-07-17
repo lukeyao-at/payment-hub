@@ -175,6 +175,17 @@
                     </div>
                 </div>
 
+                <div class="space-y-2">
+                    <div class="text-xs font-bold text-slate-700 flex items-center gap-2 border-b pb-1">
+                        <i class="fa-solid fa-arrow-down-1-9 text-brand-500"></i> Match Setting 配對順序 (Fallback Priority)
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">配對順序 (Sort)</label>
+                        <input type="number" id="gw-modal-match-priority" min="1" class="w-32 border border-slate-300 rounded-lg p-2 text-sm font-mono focus:ring-2 focus:ring-brand-500 outline-none">
+                        <p class="text-[11px] text-slate-400 mt-1">當該筆交易所屬群組沒有設定 Payment Shift 順序時，同 Gateway/Merchant/Type/Currency 組合會依此數字由小到大 fallback 配對（數字越小越優先）。</p>
+                    </div>
+                </div>
+
                 <div class="space-y-3">
                     <div class="text-xs font-bold text-slate-700 flex items-center gap-2 border-b pb-1">
                         <i class="fa-solid fa-share-nodes text-brand-500"></i> 預設指派適用站點 (Gateway Allocation)
@@ -202,6 +213,303 @@
         </div>
     </div>
 
+    <!-- 3. 交易手動操作紀錄彈窗 (Transaction Manual Action Log Modal) -->
+    <div id="tx-log-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 backdrop-blur-sm transition-all duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl w-[420px] overflow-hidden transform scale-95 transition-transform duration-300">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-brand-600"></i> Manual Action Log <span id="tx-log-modal-txid" class="text-slate-400 font-mono text-xs"></span>
+                </h3>
+                <button onclick="closeTxLogModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-3 max-h-[360px] overflow-y-auto" id="tx-log-modal-body">
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Payment Gateway Edit / FeeSetting Modal -->
+    <div id="pg-edit-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 backdrop-blur-sm transition-all duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl w-[560px] overflow-hidden transform scale-95 transition-transform duration-300 max-h-[90vh] flex flex-col">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center flex-shrink-0">
+                <h3 class="font-bold text-slate-800 text-base" id="pg-modal-title">Edit Payment Setting</h3>
+                <button onclick="closePgModal()" class="text-slate-400 hover:text-slate-600 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-6 space-y-4 overflow-y-auto">
+                <div class="bg-brand-50 p-3 rounded-xl border border-brand-100 grid grid-cols-2 gap-2 text-xs">
+                    <div><span class="text-slate-400 font-bold">GateWay:</span> <span class="font-semibold text-brand-900" id="pg-modal-gw">-</span></div>
+                    <div><span class="text-slate-400 font-bold">Currency:</span> <span class="font-semibold text-brand-900" id="pg-modal-currency">-</span></div>
+                    <div><span class="text-slate-400 font-bold">Channel:</span> <span class="font-semibold text-brand-900" id="pg-modal-channel">-</span></div>
+                    <div><span class="text-slate-400 font-bold">Type:</span> <span class="font-semibold text-brand-900" id="pg-modal-type">-</span></div>
+                </div>
+
+                <div id="pg-modal-edit-fields" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-xs font-medium text-slate-500 mb-1">Point Level</label><input type="number" id="pg-modal-pointlevel" min="0" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                        <div><label class="block text-xs font-medium text-slate-500 mb-1">Sort</label><input type="number" id="pg-modal-sort" min="0" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-xs font-medium text-slate-500 mb-1">Min Amount</label><input type="number" id="pg-modal-min" min="0" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                        <div><label class="block text-xs font-medium text-slate-500 mb-1">Max Amount</label><input type="number" id="pg-modal-max" min="0" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Amount Rule</label>
+                        <select id="pg-modal-amountrule" onchange="handlePgAmountRuleChange()" class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="1">Integer</option>
+                            <option value="3">Fixed</option>
+                        </select>
+                    </div>
+                    <div id="pg-modal-fixedlist-wrap" class="hidden">
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Fixed Amount List</label>
+                        <input type="text" id="pg-modal-fixedlist" placeholder="100,2000,5000,10000,30000" class="w-full border border-slate-300 rounded-lg p-2 text-sm font-mono outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">VIP Level List</label>
+                        <input type="text" id="pg-modal-viplevel" placeholder="e.g. 1,2,3 or All" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Tags Exclude</label>
+                        <input type="text" id="pg-modal-tagsexclude" placeholder="e.g. TAG_OVERSEAS_RISK" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <label class="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                        <input type="checkbox" id="pg-modal-isspecial" class="rounded text-brand-600 focus:ring-0"> Is Special
+                    </label>
+                </div>
+
+                <div id="pg-modal-fee-fields" class="space-y-4 hidden">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Charge Fee (%)</label>
+                            <input type="number" id="pg-modal-chargefee" step="0.01" min="0" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Per Count</label>
+                            <input type="number" id="pg-modal-percount" step="0.01" min="0" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2.5 flex-shrink-0">
+                <button onclick="closePgModal()" class="px-5 py-2 border border-slate-300 rounded-lg text-slate-600 hover:bg-white text-sm font-medium transition-colors">Cancel</button>
+                <button onclick="savePgModal()" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Payment Gateway Set GlobalStatus Modal -->
+    <div id="pg-global-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 backdrop-blur-sm transition-all duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl w-[480px] overflow-hidden transform scale-95 transition-transform duration-300 max-h-[80vh] flex flex-col">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center flex-shrink-0">
+                <h3 class="font-bold text-slate-800 text-base">Set GlobalStatus</h3>
+                <button onclick="closePgGlobalStatusModal()" class="text-slate-400 hover:text-slate-600 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="text-slate-500 font-bold border-b border-slate-200">
+                        <tr><th class="p-2">Pay</th><th class="p-2 text-center">Status</th><th class="p-2 text-center">Action</th></tr>
+                    </thead>
+                    <tbody id="pg-global-modal-body" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0">
+                <button onclick="closePgGlobalStatusModal()" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. Bank Acc Management Edit Modal -->
+    <div id="ba-edit-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 backdrop-blur-sm transition-all duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl w-[560px] overflow-hidden transform scale-95 transition-transform duration-300 max-h-[90vh] flex flex-col">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center flex-shrink-0">
+                <h3 class="font-bold text-slate-800 text-base">Edit Bank Card</h3>
+                <button onclick="closeBaModal()" class="text-slate-400 hover:text-slate-600 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-6 space-y-4 overflow-y-auto">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Currency</label><input type="text" id="ba-modal-currency" disabled class="w-full border border-slate-200 bg-slate-50 rounded-lg p-2 text-sm text-slate-500"></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Bank Name</label><input type="text" id="ba-modal-bankname" disabled class="w-full border border-slate-200 bg-slate-50 rounded-lg p-2 text-sm text-slate-500"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Account Name</label><input type="text" id="ba-modal-accountname" disabled class="w-full border border-slate-200 bg-slate-50 rounded-lg p-2 text-sm text-slate-500"></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Account No</label><input type="text" id="ba-modal-accountno" disabled class="w-full border border-slate-200 bg-slate-50 rounded-lg p-2 text-sm text-slate-500"></div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Min Amount<br><span class="text-[10px] text-slate-400 font-normal">0 = not checked</span></label><input type="number" id="ba-modal-min" min="0" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Max Amount<br><span class="text-[10px] text-slate-400 font-normal">0 = not checked</span></label><input type="number" id="ba-modal-max" min="0" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Daily Limit<br><span class="text-[10px] text-slate-400 font-normal">0 = not checked</span></label><input type="number" id="ba-modal-dailylimit" min="0" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                </div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Purposes</label><input type="text" id="ba-modal-purposes" disabled class="w-full border border-slate-200 bg-slate-50 rounded-lg p-2 text-sm text-slate-500"></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">VIP Level (required)</label><input type="text" id="ba-modal-viplevel" placeholder="e.g. 1,3,5" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Point Level (required)</label><input type="text" id="ba-modal-pointlevel" placeholder="e.g. 1,2,3" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Status</label>
+                        <select id="ba-modal-status" class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="Initial">Initial</option>
+                            <option value="Open">Open</option>
+                            <option value="Suspend">Suspend</option>
+                            <option value="Closed">Closed</option>
+                            <option value="Maintenance">Maintenance</option>
+                        </select>
+                    </div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Sort</label><input type="number" id="ba-modal-sort" min="0" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Support Channels (required)</label>
+                    <select id="ba-modal-support-channels" multiple onchange="handleBaModalChannelsChange()" class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 h-20">
+                        <option value="LocalBank">LocalBank</option>
+                        <option value="EWallet">EWallet</option>
+                        <option value="QRPay">QRPay</option>
+                    </select>
+                </div>
+                <div id="ba-modal-paygroup-wrap" class="hidden">
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Pay Group (required — only for EWallet/QRPay)</label>
+                    <input type="text" id="ba-modal-paygroup" placeholder="e.g. TrueMoney, PromptPay" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1 flex items-center justify-between">QR Code URL <button type="button" onclick="document.getElementById('ba-modal-qrcode').value=''" id="ba-modal-qr-clear-btn" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash-can"></i></button></label>
+                    <input type="text" id="ba-modal-qrcode" disabled class="w-full border border-slate-200 bg-slate-50 rounded-lg p-2 text-sm text-slate-500" placeholder="Uploaded QR image URL">
+                </div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Tag Exclude List</label><input type="text" id="ba-modal-tagexclude" placeholder="e.g. TAG_OVERSEAS_RISK" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Memo</label><textarea id="ba-modal-memo" rows="2" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></textarea></div>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2.5 flex-shrink-0">
+                <button onclick="closeBaModal()" class="px-5 py-2 border border-slate-300 rounded-lg text-slate-600 hover:bg-white text-sm font-medium transition-colors">Cancel</button>
+                <button onclick="saveBaModal()" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. Transfer Account Management Add/Edit Modal -->
+    <div id="ta-edit-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 backdrop-blur-sm transition-all duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl w-[660px] overflow-hidden transform scale-95 transition-transform duration-300 max-h-[90vh] flex flex-col">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center flex-shrink-0">
+                <h3 class="font-bold text-slate-800 text-base" id="ta-modal-title">Finance Account Info</h3>
+                <button onclick="closeTaModal()" class="text-slate-400 hover:text-slate-600 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-6 space-y-4 overflow-y-auto">
+                <div id="ta-modal-edit-warning" class="hidden bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-lg p-3">
+                    ⚠️ Editing an existing finance account affects live settlement/transfer routing — double check before saving.
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Currency</label>
+                        <select id="ta-modal-currency" class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="THB">THB</option><option value="MYR">MYR</option><option value="IDR">IDR</option><option value="USD">USD</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Channel</label>
+                        <select id="ta-modal-channel" onchange="handleTaModalChannelChange()" class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="LocalBank">LocalBank</option>
+                            <option value="HeadOffice">HeadOffice</option>
+                            <option value="Psp">Psp</option>
+                            <option value="Finance">Finance</option>
+                            <option value="MC">MC</option>
+                            <option value="CryptoWallet">CryptoWallet</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Status</label>
+                        <select id="ta-modal-status" class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="Active">Active</option><option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="ta-modal-bank-field" class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Bank</label>
+                        <select id="ta-modal-bank" class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="KBank">KBank</option><option value="Maybank">Maybank</option><option value="BCA">BCA</option>
+                        </select>
+                    </div>
+                    <div id="ta-modal-agent-wrap">
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Agent</label>
+                        <select id="ta-modal-agent" class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="">-</option>
+                            <option value="finance_kpay_01">finance_kpay_01</option>
+                            <option value="finance_payhelper_normal">finance_payhelper_normal</option>
+                            <option value="h2p_fin_settle">h2p_fin_settle</option>
+                        </select>
+                    </div>
+                    <div id="ta-modal-pay-wrap" class="hidden">
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Pay</label>
+                        <select id="ta-modal-pay" class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="KPay">KPay</option><option value="PayHelper">PayHelper</option><option value="Help2Pay">Help2Pay</option><option value="AsiaTrust">AsiaTrust</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="ta-modal-crypto-field" class="hidden grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Crypto Currency</label>
+                        <select id="ta-modal-crypto-currency" class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="USDT">USDT</option><option value="USDC">USDC</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Network</label>
+                        <select id="ta-modal-network" class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="TRC20">TRC20</option><option value="ERC20">ERC20</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Purposes (required)</label>
+                    <input type="text" id="ta-modal-purposes" placeholder="e.g. Deposit,Withdrawal" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Account No.</label><input type="text" id="ta-modal-accountno" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Account Name</label><input type="text" id="ta-modal-accountname" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Display Name</label><input type="text" id="ta-modal-displayname" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                    <div id="ta-modal-frontend-wrap" class="hidden"><label class="block text-xs font-medium text-slate-500 mb-1">Frontend Display Name</label><input type="text" id="ta-modal-frontenddisplayname" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                </div>
+                <div id="ta-modal-ifsc-wrap" class="hidden"><label class="block text-xs font-medium text-slate-500 mb-1">IFSC Code (India only)</label><input type="text" id="ta-modal-ifsc" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Initial Amount</label><input type="number" id="ta-modal-initialamount" min="0" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><label class="block text-xs font-medium text-slate-500 mb-1">Initial Time</label><input type="datetime-local" id="ta-modal-initialtime" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                        <div><label class="block text-xs font-medium text-slate-500 mb-1">Timezone</label><select id="ta-modal-timezone" class="w-full border border-slate-300 rounded-lg p-2 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500"><option value="+7">UTC+7</option><option value="+8">UTC+8</option><option value="0">UTC+0</option></select></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Reason</label><input type="text" id="ta-modal-reason" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Bank Login URL</label><input type="text" id="ta-modal-loginurl" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                </div>
+                <div><label class="block text-xs font-medium text-slate-500 mb-1">Remark</label><textarea id="ta-modal-remark" rows="2" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></textarea></div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Bank Login Info</label>
+                    <div id="ta-modal-login-list" class="space-y-2"></div>
+                    <button type="button" onclick="addTaLoginInfoRow()" class="mt-2 text-xs border border-dashed border-slate-300 text-slate-500 hover:text-brand-600 hover:border-brand-400 rounded-lg px-3 py-1.5 w-full"><i class="fa-solid fa-plus"></i> Add Login Info</button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Transfer Pin</label><input type="text" id="ta-modal-transferpin" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Login Pin</label><input type="text" id="ta-modal-loginpin" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Mobile Pin</label><input type="text" id="ta-modal-mobilepin" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                    <div><label class="block text-xs font-medium text-slate-500 mb-1">Corporate ID</label><input type="text" id="ta-modal-corporateid" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"></div>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2.5 flex-shrink-0">
+                <button onclick="closeTaModal()" class="px-5 py-2 border border-slate-300 rounded-lg text-slate-600 hover:bg-white text-sm font-medium transition-colors">Cancel</button>
+                <button onclick="saveTaModal()" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors">Save</button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- 側邊導覽列 (Sidebar Navigation) -->
     <aside class="w-64 bg-sidebar text-slate-300 flex flex-col flex-shrink-0 shadow-xl z-20 transition-all duration-300 ease-in-out">
@@ -218,27 +526,75 @@
         </div>
 
         <div class="flex-1 overflow-y-auto py-4 no-scrollbar">
-            <div class="px-6 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap overflow-hidden">金流核心管理</div>
+            <!-- 模擬 admin site 既有 AdminMenu 階層：Finance (HeirId=0) → Setting (子節點) → Payment Hub 6 支功能 (Setting 的子節點) -->
+            <div class="px-6 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap overflow-hidden">Finance</div>
             <nav class="space-y-1 px-3 mb-6">
-                <button onclick="switchTab('wf-merchant')" id="btn-wf-merchant" class="w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
-                    <i class="fa-solid fa-shield-halved w-6 text-center text-slate-400"></i> 商戶管理
+                <button onclick="toggleFinanceSetting()" id="btn-finance-setting" class="w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center justify-between whitespace-nowrap overflow-hidden font-bold">
+                    <span class="flex items-center">Setting</span>
+                    <i class="fa-solid fa-chevron-down text-[10px] text-slate-500 transition-transform" id="finance-setting-chevron"></i>
                 </button>
-                <button onclick="switchTab('wf-channel')" id="btn-wf-channel" class="w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
-                    <i class="fa-solid fa-network-wired w-6 text-center text-slate-400"></i> 網關與渠道
-                </button>
-                <button onclick="switchTab('wf-report')" id="btn-wf-report" class="w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
-                    <i class="fa-solid fa-chart-line w-6 text-center text-slate-400"></i> 商戶金流明細報表
-                </button>
-            </nav>
+                <div id="finance-setting-children" class="space-y-1 pl-4 border-l border-slate-800 ml-4">
+                    <!-- 既有 adminsite Finance > Setting 選單項目（本次 demo 未實作，僅作為佔位項目呈現完整選單脈絡） -->
+                    <button onclick="switchTab('wf-transfer-acc')" id="btn-wf-transfer-acc" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                        Transfer Account Management
+                    </button>
+                    <button onclick="switchTab('wf-bank-acc')" id="btn-wf-bank-acc" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                        Bank Acc Management
+                    </button>
+                    <button onclick="switchTab('wf-pay-gateway')" id="btn-wf-pay-gateway" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                        Payment Gateway
+                    </button>
+                    <button onclick="showExistingMenuPlaceholder('Deposit Limitation', this)" class="existing-menu-btn w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-400 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                        Deposit Limitation
+                    </button>
+                    <button onclick="showExistingMenuPlaceholder('Withdrawal Limitation', this)" class="existing-menu-btn w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-400 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                        Withdrawal Limitation
+                    </button>
+                    <button onclick="showExistingMenuPlaceholder('Adjustment Limitation', this)" class="existing-menu-btn w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-400 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                        Adjustment Limitation
+                    </button>
+                    <button onclick="showExistingMenuPlaceholder('E-Wallet Setting', this)" class="existing-menu-btn w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-400 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                        E-Wallet Setting
+                    </button>
+                    <button onclick="showExistingMenuPlaceholder('Modify Payment Fee Log', this)" class="existing-menu-btn w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-400 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                        Modify Payment Fee Log
+                    </button>
+                    <button onclick="showExistingMenuPlaceholder('Payment Agent Management', this)" class="existing-menu-btn w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-400 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                        Payment Agent Management
+                    </button>
+                    <button onclick="showExistingMenuPlaceholder('Point Level Management', this)" class="existing-menu-btn w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-400 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                        Point Level Management
+                    </button>
+                    <button onclick="showExistingMenuPlaceholder('Deposit Manual Rate', this)" class="existing-menu-btn w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-400 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                        Deposit Manual Rate
+                    </button>
+                    <button onclick="showExistingMenuPlaceholder('Withdrawal Manual Rate', this)" class="existing-menu-btn w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-400 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                        Withdrawal Manual Rate
+                    </button>
+                    <button onclick="switchTab('wf-pay-shift')" id="btn-wf-pay-shift" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                        Payment Shift Setting
+                    </button>
 
-            <div class="px-6 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap overflow-hidden">智慧策略引擎</div>
-            <nav class="space-y-1 px-3 mb-6">
-                <button onclick="switchTab('wf-override')" id="btn-wf-override" class="w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
-                    <i class="fa-solid fa-sliders w-6 text-center text-slate-400"></i> 智慧分群與渠道對應
-                </button>
-                <button onclick="switchTab('wf-sandbox')" id="btn-wf-sandbox" class="w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
-                    <i class="fa-solid fa-laptop-code w-6 text-center text-slate-400"></i> B2C 貼標與沙盒模擬
-                </button>
+                    <div class="px-3 pt-3 pb-1 text-[9px] font-bold text-brand-400 uppercase tracking-wider whitespace-nowrap overflow-hidden border-t border-slate-800 mt-2">Payment Hub (New)</div>
+                    <button onclick="switchTab('wf-merchant')" id="btn-wf-merchant" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                        Payment Merchant Management
+                    </button>
+                    <button onclick="switchTab('wf-channel')" id="btn-wf-channel" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                        Merchant Setting
+                    </button>
+                    <button onclick="switchTab('wf-report')" id="btn-wf-report" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                        Merchant Report
+                    </button>
+                    <button onclick="switchTab('wf-fee')" id="btn-wf-fee" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                        Channel Fee Summary
+                    </button>
+                    <button onclick="switchTab('wf-override')" id="btn-wf-override" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                        智慧分群與渠道對應
+                    </button>
+                    <button onclick="switchTab('wf-sandbox')" id="btn-wf-sandbox" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                        B2C 貼標與沙盒模擬
+                    </button>
+                </div>
             </nav>
         </div>
 
@@ -408,6 +764,7 @@
                                         <th class="p-3 text-right font-bold">Max Limit</th>
                                         <th class="p-3 text-right font-bold">Fee (%)</th>
                                         <th class="p-3 text-right font-bold">Fixed Fee</th>
+                                        <th class="p-3 text-center font-bold" title="Match Setting fallback order used when the group has no Payment Shift priority configured">Sort</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100" id="channel-table-body">
@@ -746,17 +1103,17 @@
                     <!-- 篩選控制卡片 (Filter Controls Card) -->
                     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-end gap-4 flex-wrap">
                         <div class="w-40">
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5">開始日期 (From)</label>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Start Date (From)</label>
                             <input type="date" id="report-start-date" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
                         </div>
                         <div class="w-40">
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5">結束日期 (To)</label>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">End Date (To)</label>
                             <input type="date" id="report-end-date" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
                         </div>
                         <div class="w-44">
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5">商戶編號 (Merchant ID)</label>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Merchant ID</label>
                             <select id="report-merchant-id" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
-                                <option value="All">全部商戶</option>
+                                <option value="All">All Merchants</option>
                                 <option value="SYS_MER_001">SYS_MER_001 (KPay)</option>
                                 <option value="SYS_MER_002">SYS_MER_002 (PayHelper)</option>
                                 <option value="SYS_MER_003">SYS_MER_003 (Help2Pay)</option>
@@ -764,26 +1121,26 @@
                             </select>
                         </div>
                         <div class="w-36">
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5">來源站點 (Site)</label>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Site</label>
                             <select id="report-site" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
-                                <option value="All">全部站點</option>
+                                <option value="All">All Sites</option>
                                 <option value="12bet">12bet</option>
                                 <option value="Nova">Nova</option>
                                 <option value="Bwing">Bwing</option>
                             </select>
                         </div>
                         <div class="w-36">
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5">交易類型 (Type)</label>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Direction</label>
                             <select id="report-direction" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
-                                <option value="All">全部類型</option>
-                                <option value="Deposit">存款 (Deposit)</option>
-                                <option value="Withdrawal">提款 (Withdrawal)</option>
+                                <option value="All">All</option>
+                                <option value="Deposit">Deposit</option>
+                                <option value="Withdrawal">Withdrawal</option>
                             </select>
                         </div>
                         <div class="w-40">
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5">網關品牌 (Gateway)</label>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Gateway</label>
                             <select id="report-gateway" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
-                                <option value="All">全部網關</option>
+                                <option value="All">All Gateways</option>
                                 <option value="KPay">KPay</option>
                                 <option value="PayHelper">PayHelper</option>
                                 <option value="Help2Pay">Help2Pay</option>
@@ -804,39 +1161,46 @@
                             </select>
                         </div>
                         <div class="w-36">
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5">交易狀態 (Status)</label>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Status</label>
                             <select id="report-status" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
-                                <option value="All">全部狀態</option>
-                                <option value="SUCCESS">SUCCESS (成功)</option>
-                                <option value="FAILED">FAILED (失敗)</option>
-                                <option value="PENDING">PENDING (處理中)</option>
-                                <option value="REJECTED">REJECTED (熔斷)</option>
+                                <option value="All">All Statuses</option>
+                                <option value="SUCCESS">SUCCESS</option>
+                                <option value="FAILED">FAILED</option>
+                                <option value="PENDING">PENDING</option>
+                                <option value="REJECTED">REJECTED</option>
                             </select>
                         </div>
                         <div class="w-40">
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5">B2C 通知狀態 (Notify)</label>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">B2C Status</label>
                             <select id="report-notify-status" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
-                                <option value="All">全部</option>
-                                <option value="Delivered">Delivered (已送達)</option>
-                                <option value="Failed">Failed (送達失敗)</option>
-                                <option value="Pending">Pending (送出中)</option>
-                                <option value="NotSent">NotSent (尚未送出)</option>
+                                <option value="All">All</option>
+                                <option value="Delivered">Delivered</option>
+                                <option value="Failed">Failed</option>
+                                <option value="NotSent">Not Sent</option>
                             </select>
                         </div>
                         <div class="w-48">
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5">系統交易單號 (System Tx ID)</label>
-                            <input type="text" id="report-txid" placeholder="輸入單號搜尋..." class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Tx ID</label>
+                            <input type="text" id="report-txid" placeholder="Search by Tx ID..." class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
                         </div>
                         <div class="w-48">
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5">3.0 策略群組名稱</label>
-                            <input type="text" id="report-group" placeholder="輸入分群名稱搜尋..." class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">3.0 Strategy Group Name</label>
+                            <input type="text" id="report-group" placeholder="Search by group name..." class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                        </div>
+                        <div class="w-48">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Operator (Simulated Login)</label>
+                            <select id="report-operator" onchange="setCurrentOperator(this.value)" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm font-mono">
+                                <option value="finance_manager_01">finance_manager_01</option>
+                                <option value="ops_supervisor_02">ops_supervisor_02</option>
+                                <option value="risk_officer_03">risk_officer_03</option>
+                            </select>
                         </div>
                         <div class="flex gap-2">
                             <button onclick="handleReportSearch()" class="bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
-                                <i class="fa-solid fa-magnifying-glass"></i> 查詢條件
+                                <i class="fa-solid fa-magnifying-glass"></i> Search
                             </button>
                             <button onclick="exportReportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
-                                <i class="fa-solid fa-file-csv"></i> 匯出報表
+                                <i class="fa-solid fa-file-csv"></i> Export CSV
                             </button>
                         </div>
                     </div>
@@ -848,9 +1212,9 @@
                                 <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
                                     <tr>
                                         <th class="p-3">Date/Time</th>
-                                        <th class="p-3">System Tx ID</th>
+                                        <th class="p-3">Tx ID</th>
                                         <th class="p-3">Site</th>
-                                        <th class="p-3 text-center">Type</th>
+                                        <th class="p-3 text-center">Direction</th>
                                         <th class="p-3">Merchant ID</th>
                                         <th class="p-3">Gateway</th>
                                         <th class="p-3">Channel Type</th>
@@ -858,7 +1222,7 @@
                                         <th class="p-3 text-center">Currency</th>
                                         <th class="p-3 text-right">Fee (Est.)</th>
                                         <th class="p-3 text-center">Status</th>
-                                        <th class="p-3 text-center">B2C Notify</th>
+                                        <th class="p-3 text-center">B2C Status</th>
                                         <th class="p-3 text-center">Action</th>
                                     </tr>
                                 </thead>
@@ -870,13 +1234,441 @@
                         <!-- 智慧分頁導覽列 -->
                         <div class="bg-slate-50 border-t border-slate-200 p-4 flex items-center justify-between text-xs text-slate-500">
                             <div>
-                                顯示第 <span id="report-page-start" class="font-bold text-slate-700">0</span> 至 <span id="report-page-end" class="font-bold text-slate-700">0</span> 筆，共 <span id="report-total-count" class="font-bold text-slate-700">0</span> 筆金流明細
+                                Showing <span id="report-page-start" class="font-bold text-slate-700">0</span> to <span id="report-page-end" class="font-bold text-slate-700">0</span> of <span id="report-total-count" class="font-bold text-slate-700">0</span> transactions
                             </div>
                             <div class="flex items-center gap-1.5" id="report-pagination-buttons">
                             </div>
                         </div>
                     </div>
 
+                </div>
+
+                <!-- ================= TAB 6: Channel Fee Summary (wf-fee) ================= -->
+                <div id="wf-fee" class="tab-content space-y-6">
+
+                    <!-- 篩選控制卡片 (Filter Controls Card) -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-end gap-4 flex-wrap">
+                        <div class="w-40">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Start Date (From)</label>
+                            <input type="date" id="fee-start-date" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                        </div>
+                        <div class="w-40">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">End Date (To)</label>
+                            <input type="date" id="fee-end-date" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                        </div>
+                        <div class="w-36">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Site</label>
+                            <select id="fee-site" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">All Sites</option>
+                                <option value="12bet">12bet</option>
+                                <option value="Nova">Nova</option>
+                                <option value="Bwing">Bwing</option>
+                            </select>
+                        </div>
+                        <div class="w-40">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Gateway</label>
+                            <select id="fee-gateway" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">All Gateways</option>
+                                <option value="KPay">KPay</option>
+                                <option value="PayHelper">PayHelper</option>
+                                <option value="Help2Pay">Help2Pay</option>
+                                <option value="AsiaTrust">AsiaTrust</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="handleFeeSummarySearch()" class="bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
+                                <i class="fa-solid fa-magnifying-glass"></i> Search
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 手續費成本彙總卡片 (Channel Fee Cost Summary) -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                        <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2"><i class="fa-solid fa-sack-dollar text-brand-600"></i> Channel Fee Summary (Filtered Range, Settled Only)</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs whitespace-nowrap">
+                                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
+                                    <tr>
+                                        <th class="p-2">Gateway</th>
+                                        <th class="p-2 text-right">Transactions</th>
+                                        <th class="p-2 text-right">Settlement Amount</th>
+                                        <th class="p-2 text-right">Channel Fee</th>
+                                        <th class="p-2 text-right">Fee Ratio</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100" id="fee-summary-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ================= 既有 Finance > Setting 選單佔位頁 (wf-placeholder) ================= -->
+                <div id="wf-placeholder" class="tab-content space-y-6">
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-10 flex flex-col items-center text-center gap-3">
+                        <i class="fa-solid fa-folder-closed text-4xl text-slate-300"></i>
+                        <h3 class="text-slate-700 font-bold text-base" id="placeholder-menu-name">-</h3>
+                        <p class="text-slate-400 text-sm max-w-md">這是 adminsite 現有的 Finance &gt; Setting 選單項目，本次 Payment Hub demo 未包含其功能實作，僅呈現於選單中供脈絡參考。</p>
+                    </div>
+                </div>
+
+                <!-- ================= Payment Gateway (wf-pay-gateway) — ported from adminsite src/features/paymentManagement ================= -->
+                <div id="wf-pay-gateway" class="tab-content space-y-6">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-end gap-4 flex-wrap">
+                        <div class="w-32">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Currency</label>
+                            <select id="pg-currency" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">All</option>
+                                <option value="THB">THB</option>
+                                <option value="MYR">MYR</option>
+                                <option value="IDR">IDR</option>
+                                <option value="USD">USD</option>
+                                <option value="INR">INR</option>
+                            </select>
+                        </div>
+                        <div class="w-36">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Method Type</label>
+                            <select id="pg-method" onchange="handlePgMethodChange()" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">All</option>
+                                <option value="Deposit">Deposit</option>
+                                <option value="Withdrawal">Withdrawal</option>
+                            </select>
+                        </div>
+                        <div class="w-36">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Gateway</label>
+                            <select id="pg-gateway" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">All</option>
+                                <option value="KPay">KPay</option>
+                                <option value="PayHelper">PayHelper</option>
+                                <option value="Help2Pay">Help2Pay</option>
+                                <option value="AsiaTrust">AsiaTrust</option>
+                            </select>
+                        </div>
+                        <div class="w-36">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Type</label>
+                            <select id="pg-type" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">All</option>
+                                <option value="OnlineBanking">OnlineBanking</option>
+                                <option value="EWallet">EWallet</option>
+                                <option value="TopupCard">TopupCard</option>
+                                <option value="CardTransfer">CardTransfer</option>
+                            </select>
+                        </div>
+                        <div class="w-32">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Global Status</label>
+                            <select id="pg-global-status" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">All</option>
+                                <option value="1">Active</option>
+                                <option value="2">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="w-32">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Status</label>
+                            <select id="pg-status" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">All</option>
+                                <option value="1">Active</option>
+                                <option value="2">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="w-28">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Point Level</label>
+                            <input type="number" id="pg-point-level" min="0" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                        </div>
+                        <div class="flex gap-2 flex-wrap">
+                            <button onclick="handlePgSearch()" class="bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
+                                <i class="fa-solid fa-magnifying-glass"></i> Search
+                            </button>
+                            <button onclick="openPgGlobalStatusModal()" class="bg-slate-600 hover:bg-slate-700 text-white font-medium text-xs px-3 py-2.5 rounded-lg shadow-sm transition-colors">Set GlobalStatus</button>
+                            <button onclick="pgStubAction('Crypto Setting')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-xs px-3 py-2.5 rounded-lg transition-colors">Crypto Setting</button>
+                            <button onclick="pgStubAction('Auto Withdrawal Rule')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-xs px-3 py-2.5 rounded-lg transition-colors">Auto Withdrawal Rule</button>
+                            <button onclick="pgStubAction('Auto Verify Rule')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-xs px-3 py-2.5 rounded-lg transition-colors">Auto Verify Rule</button>
+                            <button onclick="pgStubAction('Withdrawal Option Status')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-xs px-3 py-2.5 rounded-lg transition-colors">Withdrawal Option Status</button>
+                            <button onclick="pgStubAction('Bank Maintenance')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-xs px-3 py-2.5 rounded-lg transition-colors">Bank Maintenance</button>
+                            <button onclick="pgStubAction('Deposit Transaction Quantity Limit')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-xs px-3 py-2.5 rounded-lg transition-colors">Deposit Txn Qty Limit</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs whitespace-nowrap">
+                                <thead class="bg-slate-100 border-b border-slate-200 text-slate-600 font-bold">
+                                    <tr>
+                                        <th class="p-3 text-center">Action</th>
+                                        <th class="p-3 text-center">Status</th>
+                                        <th class="p-3">Method</th>
+                                        <th class="p-3">GateWay</th>
+                                        <th class="p-3">Group</th>
+                                        <th class="p-3">Channel</th>
+                                        <th class="p-3">Type</th>
+                                        <th class="p-3 text-center">Currency</th>
+                                        <th class="p-3 text-right">Min</th>
+                                        <th class="p-3 text-right">Max</th>
+                                        <th class="p-3">AmountRule</th>
+                                        <th class="p-3">GlobalStatus</th>
+                                        <th class="p-3 text-center">PointLevel</th>
+                                        <th class="p-3 text-center">Sort</th>
+                                        <th class="p-3 text-center">IsSpecial</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100" id="pg-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= Payment Shift Setting (wf-pay-shift) — ported from adminsite src/features/paymentShiftSetting ================= -->
+                <div id="wf-pay-shift" class="tab-content space-y-6">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">Currency</label>
+                                <select id="ps-currency" onchange="handlePsCurrencyChange()" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm"></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">Deposit Type</label>
+                                <select id="ps-deposit-type" onchange="handlePsDepositTypeChange()" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm"></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">Group</label>
+                                <select id="ps-group" onchange="renderPsTable()" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm"></select>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-2">選好 Currency / Deposit Type / Group 三個條件後即自動載入下方時刻表，無需另外按搜尋（與真實 adminsite 行為一致）。</p>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+                            <table class="w-full text-left text-xs whitespace-nowrap">
+                                <thead class="bg-slate-100 border-b border-slate-200 text-slate-600 font-bold sticky top-0">
+                                    <tr>
+                                        <th class="p-2 w-20">Time</th>
+                                        <th class="p-2">Priority 1</th>
+                                        <th class="p-2">Priority 2</th>
+                                        <th class="p-2">Priority 3</th>
+                                        <th class="p-2">Others</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100" id="ps-table-body">
+                                    <tr><td colspan="5" class="p-8 text-center text-slate-400 italic">請先選擇 Currency / Deposit Type / Group</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="bg-slate-50 border-t border-slate-200 p-4 flex justify-end">
+                            <button onclick="submitPsShift()" class="bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm px-6 py-2.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
+                                <i class="fa-solid fa-floppy-disk"></i> Submit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= Bank Acc Management (wf-bank-acc) — ported from adminsite src/features/bankCardManagement ================= -->
+                <div id="wf-bank-acc" class="tab-content space-y-6">
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="flex border-b border-slate-200" id="ba-currency-tabs"></div>
+                        <div class="p-5 flex items-end gap-4 flex-wrap">
+                            <div class="w-36">
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">Bank Code</label>
+                                <select id="ba-bank-code" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                    <option value="All">All</option>
+                                </select>
+                            </div>
+                            <div class="w-40">
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">Account No</label>
+                                <input type="text" id="ba-account-no" placeholder="Search account no..." class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                            </div>
+                            <div class="w-36">
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">Purposes</label>
+                                <select id="ba-purposes" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                    <option value="All">All</option>
+                                    <option value="Deposit">Deposit</option>
+                                    <option value="Withdrawal">Withdrawal</option>
+                                    <option value="TransferAccounting">Transfer Accounting</option>
+                                </select>
+                            </div>
+                            <div class="w-40">
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">Agent</label>
+                                <select id="ba-agent" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                    <option value="All">All</option>
+                                    <option value="finance_kpay_01">finance_kpay_01</option>
+                                    <option value="finance_payhelper_normal">finance_payhelper_normal</option>
+                                    <option value="h2p_fin_settle">h2p_fin_settle</option>
+                                </select>
+                            </div>
+                            <div class="w-36">
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">VIP Level</label>
+                                <select id="ba-vip-level" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                    <option value="All">All</option>
+                                    <option value="1">VIP1</option>
+                                    <option value="3">VIP3</option>
+                                    <option value="5">VIP5</option>
+                                </select>
+                            </div>
+                            <div class="w-32">
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">Status</label>
+                                <select id="ba-status" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                    <option value="All">All</option>
+                                    <option value="Initial">Initial</option>
+                                    <option value="Open">Open</option>
+                                    <option value="Suspend">Suspend</option>
+                                    <option value="Closed">Closed</option>
+                                    <option value="Maintenance">Maintenance</option>
+                                </select>
+                            </div>
+                            <div class="w-28">
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">Point Level</label>
+                                <select id="ba-point-level" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                    <option value="All">All</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                </select>
+                            </div>
+                            <div class="w-36">
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5">Support Channels</label>
+                                <select id="ba-support-channel" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                    <option value="All">All</option>
+                                    <option value="LocalBank">LocalBank</option>
+                                    <option value="EWallet">EWallet</option>
+                                    <option value="QRPay">QRPay</option>
+                                </select>
+                            </div>
+                            <button onclick="handleBaSearch()" class="bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
+                                <i class="fa-solid fa-magnifying-glass"></i> Search
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs whitespace-nowrap">
+                                <thead class="bg-slate-100 border-b border-slate-200 text-slate-600 font-bold">
+                                    <tr>
+                                        <th class="p-3 text-center">Action</th>
+                                        <th class="p-3">Agent</th>
+                                        <th class="p-3">Bank Code</th>
+                                        <th class="p-3">Bank Name</th>
+                                        <th class="p-3">Account No</th>
+                                        <th class="p-3">Account Name</th>
+                                        <th class="p-3 text-center">Status</th>
+                                        <th class="p-3">Support Channels</th>
+                                        <th class="p-3">Purposes</th>
+                                        <th class="p-3">Point Level</th>
+                                        <th class="p-3">VIP Level</th>
+                                        <th class="p-3 text-right">Min Amount</th>
+                                        <th class="p-3 text-right">Max Amount</th>
+                                        <th class="p-3 text-right">Daily Limit</th>
+                                        <th class="p-3 text-right">Dummy</th>
+                                        <th class="p-3 text-center">Sort</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100" id="ba-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= Transfer Account Management (wf-transfer-acc) — ported from adminsite src/features/transferAccountManagement ================= -->
+                <div id="wf-transfer-acc" class="tab-content space-y-6">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-end gap-4 flex-wrap">
+                        <div class="w-32">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Currency</label>
+                            <select id="ta-currency" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">All</option>
+                                <option value="THB">THB</option>
+                                <option value="MYR">MYR</option>
+                                <option value="IDR">IDR</option>
+                                <option value="USD">USD</option>
+                            </select>
+                        </div>
+                        <div class="w-36">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Bank</label>
+                            <select id="ta-bank" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">All</option>
+                                <option value="KBank">KBank</option>
+                                <option value="Maybank">Maybank</option>
+                                <option value="BCA">BCA</option>
+                            </select>
+                        </div>
+                        <div class="w-40">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Channel</label>
+                            <select id="ta-channel" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">All</option>
+                                <option value="LocalBank">LocalBank</option>
+                                <option value="HeadOffice">HeadOffice</option>
+                                <option value="Psp">Psp</option>
+                                <option value="Finance">Finance</option>
+                                <option value="MC">MC</option>
+                                <option value="CryptoWallet">CryptoWallet</option>
+                            </select>
+                        </div>
+                        <div class="w-32">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Status</label>
+                            <select id="ta-status" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">All</option>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="w-36">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Purposes</label>
+                            <select id="ta-purposes" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">All</option>
+                                <option value="Deposit">Deposit</option>
+                                <option value="Withdrawal">Withdrawal</option>
+                                <option value="Settlement">Settlement</option>
+                            </select>
+                        </div>
+                        <div class="w-40">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Account No.</label>
+                            <input type="text" id="ta-account-no" placeholder="Search account no..." class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                        </div>
+                        <div class="w-40">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Agent</label>
+                            <select id="ta-agent" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">All</option>
+                                <option value="finance_kpay_01">finance_kpay_01</option>
+                                <option value="finance_payhelper_normal">finance_payhelper_normal</option>
+                                <option value="h2p_fin_settle">h2p_fin_settle</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="handleTaSearch()" class="bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
+                                <i class="fa-solid fa-magnifying-glass"></i> Search
+                            </button>
+                            <button onclick="openTaModal(0)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
+                                <i class="fa-solid fa-plus"></i> Create
+                            </button>
+                            <button onclick="alertSimulator('📥 Exported BankTransferAccounts_' + nowTimestamp().replace(/[^0-9]/g,'') + '.xlsx')" class="bg-slate-600 hover:bg-slate-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-export"></i> Export Excel
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs whitespace-nowrap">
+                                <thead class="bg-slate-100 border-b border-slate-200 text-slate-600 font-bold">
+                                    <tr>
+                                        <th class="p-3 text-center">Currency</th>
+                                        <th class="p-3 text-center">Action</th>
+                                        <th class="p-3">Bank</th>
+                                        <th class="p-3 text-center">Status</th>
+                                        <th class="p-3">Agent</th>
+                                        <th class="p-3">Channel</th>
+                                        <th class="p-3">Purposes</th>
+                                        <th class="p-3">Pay</th>
+                                        <th class="p-3">Account No.</th>
+                                        <th class="p-3">Account Name</th>
+                                        <th class="p-3">Display Name</th>
+                                        <th class="p-3">Last Update Time</th>
+                                        <th class="p-3">Creator</th>
+                                        <th class="p-3">Update</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100" id="ta-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -897,6 +1689,16 @@
         let reportCurrentPage = 1;
         const reportPageSize = 10;
 
+        // 模擬目前登入後台的操作帳號（實際上線由既有 admin 後台權限系統帶入，此處僅供 demo 記錄操作人）
+        let currentOperator = 'finance_manager_01';
+        const operatorAccounts = ['finance_manager_01', 'ops_supervisor_02', 'risk_officer_03'];
+
+        function nowTimestamp() {
+            const d = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        }
+
         // === 1. 全局輔助與財務換算函數 (移至最上層以防 ReferenceError) ===
 
         // 交易單號自動生成：存款前綴為 DP，提款前綴為 WP，例如 DP16907796
@@ -907,10 +1709,12 @@
         }
 
         // 系統訊息通知氣泡提示
-        function alertSimulator(msg) {
+        function alertSimulator(msg, isError) {
             const notify = document.createElement('div');
-            notify.className = "fixed bottom-5 right-5 bg-slate-900 text-white text-xs px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2 border border-slate-700 transition-all duration-300";
-            notify.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> <span>${msg}</span>`;
+            notify.className = `fixed bottom-5 right-5 text-white text-xs px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2 border transition-all duration-300 ${isError ? 'bg-rose-900 border-rose-700' : 'bg-slate-900 border-slate-700'}`;
+            notify.innerHTML = isError
+                ? `<i class="fa-solid fa-triangle-exclamation text-rose-300"></i> <span>${msg}</span>`
+                : `<i class="fa-solid fa-circle-check text-emerald-400"></i> <span>${msg}</span>`;
             document.body.appendChild(notify);
             setTimeout(() => {
                 notify.classList.add('opacity-0', 'translate-y-2');
@@ -942,18 +1746,19 @@
             { sysId: 'SYS_MER_004', gateway: 'AsiaTrust', currency: 'USD', balance: 42000, loginUser: 'asiatrust_memo', loginPass: 'AT_memo_pass', status: 'Disable' }
         ];
 
+        // matchPriority：Match Setting 配對順序 fallback 用（同 Gateway/Merchant/Type/Currency 組合時，數字越小越優先）
         let channelData = [
-            { id: 1, method: 'Deposit', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', group: 'Online Banking', type: 'OnlineBanking', currency: 'MYR', min: 10, max: 5000, chargeFee: 1.20, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
-            { id: 2, method: 'Deposit', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', group: 'Online Banking', type: 'OnlineBanking', currency: 'THB', min: 50, max: 20000, chargeFee: 1.50, perCount: 1.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
-            { id: 3, method: 'Deposit', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', group: 'Online Banking', type: 'OnlineBanking', currency: 'IDR', min: 20000, max: 500000, chargeFee: 1.10, perCount: 0.00, status: true, defaultSites: ['12bet', 'Bwing'] },
-            { id: 4, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', group: 'PhonePe', type: 'EWallet', currency: 'INR', min: 100, max: 50000, chargeFee: 2.00, perCount: 5.00, status: true, defaultSites: ['Nova'] },
-            { id: 5, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', group: 'GoPay', type: 'EWallet', currency: 'IDR', min: 50000, max: 1000000, chargeFee: 1.80, perCount: 10.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
-            { id: 6, method: 'Deposit', gateway: 'PayHelper', sysMerchant: 'SYS_MER_002', group: 'TopupCard', type: 'TopupCard', currency: 'THB', min: 100, max: 5000, chargeFee: 3.50, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
-            { id: 7, method: 'Withdrawal', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', group: 'BankTransfer', type: 'CardTransfer', currency: 'MYR', min: 100, max: 100000, chargeFee: 0.00, perCount: 15.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
-            { id: 8, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', group: 'PromptPay', type: 'EWallet', currency: 'THB', min: 20, max: 15000, chargeFee: 1.10, perCount: 0.50, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
-            { id: 9, method: 'Deposit', gateway: 'PayHelper', sysMerchant: 'SYS_MER_002', group: 'TrueMoney', type: 'EWallet', currency: 'THB', min: 50, max: 8000, chargeFee: 1.30, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] },
-            { id: 10, method: 'Deposit', gateway: 'AsiaTrust', sysMerchant: 'SYS_MER_004', group: 'FastBank', type: 'OnlineBanking', currency: 'THB', min: 500, max: 100000, chargeFee: 0.90, perCount: 2.00, status: true, defaultSites: ['12bet', 'Bwing'] },
-            { id: 11, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', group: 'TrueMoney', type: 'EWallet', currency: 'THB', min: 30, max: 10000, chargeFee: 1.25, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'] }
+            { id: 1, method: 'Deposit', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', group: 'Online Banking', type: 'OnlineBanking', currency: 'MYR', min: 10, max: 5000, chargeFee: 1.20, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'], matchPriority: 1 },
+            { id: 2, method: 'Deposit', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', group: 'Online Banking', type: 'OnlineBanking', currency: 'THB', min: 50, max: 20000, chargeFee: 1.50, perCount: 1.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'], matchPriority: 1 },
+            { id: 3, method: 'Deposit', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', group: 'Online Banking', type: 'OnlineBanking', currency: 'IDR', min: 20000, max: 500000, chargeFee: 1.10, perCount: 0.00, status: true, defaultSites: ['12bet', 'Bwing'], matchPriority: 1 },
+            { id: 4, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', group: 'PhonePe', type: 'EWallet', currency: 'INR', min: 100, max: 50000, chargeFee: 2.00, perCount: 5.00, status: true, defaultSites: ['Nova'], matchPriority: 1 },
+            { id: 5, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', group: 'GoPay', type: 'EWallet', currency: 'IDR', min: 50000, max: 1000000, chargeFee: 1.80, perCount: 10.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'], matchPriority: 1 },
+            { id: 6, method: 'Deposit', gateway: 'PayHelper', sysMerchant: 'SYS_MER_002', group: 'TopupCard', type: 'TopupCard', currency: 'THB', min: 100, max: 5000, chargeFee: 3.50, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'], matchPriority: 1 },
+            { id: 7, method: 'Withdrawal', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', group: 'BankTransfer', type: 'CardTransfer', currency: 'MYR', min: 100, max: 100000, chargeFee: 0.00, perCount: 15.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'], matchPriority: 1 },
+            { id: 8, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', group: 'PromptPay', type: 'EWallet', currency: 'THB', min: 20, max: 15000, chargeFee: 1.10, perCount: 0.50, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'], matchPriority: 1 },
+            { id: 9, method: 'Deposit', gateway: 'PayHelper', sysMerchant: 'SYS_MER_002', group: 'TrueMoney', type: 'EWallet', currency: 'THB', min: 50, max: 8000, chargeFee: 1.30, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'], matchPriority: 1 },
+            { id: 10, method: 'Deposit', gateway: 'AsiaTrust', sysMerchant: 'SYS_MER_004', group: 'FastBank', type: 'OnlineBanking', currency: 'THB', min: 500, max: 100000, chargeFee: 0.90, perCount: 2.00, status: true, defaultSites: ['12bet', 'Bwing'], matchPriority: 1 },
+            { id: 11, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', group: 'TrueMoney', type: 'EWallet', currency: 'THB', min: 30, max: 10000, chargeFee: 1.25, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'], matchPriority: 2 }
         ];
 
         let ruleGroups = [
@@ -991,7 +1796,7 @@
 
         // 模擬商戶交易明細總帳數據庫 (15 筆明細，完全防截斷且保留 Page 1、Page 2、成敗退款及 Deposit / Withdrawal 方向驗證)
         // notifyStatus 追蹤 Hub → B2C 平台的通知送達狀態，與交易本身的成敗結果是兩個獨立維度
-        // Delivered：B2C 已確認收到 / Failed：送過但失敗（需重送）/ Pending：送出中尚未確認 / NotSent：Hub 尚未嘗試送出
+        // Delivered：B2C 已確認收到 / Failed：送過但失敗（需重送）/ NotSent：Hub 尚未嘗試送出（通知為同步 callback，僅有成功/失敗兩種結果，無 Pending 中間態）
         let merchantReportData = [
             { date: '2026-06-28 10:30:22', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', currency: 'THB', successAmount: 3500, fee: 52.5, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', direction: 'Deposit', notifyStatus: 'Delivered' },
             { date: '2026-06-28 09:12:44', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', currency: 'MYR', successAmount: 450, fee: 9.0, successCount: 1, failedCount: 0, status: 'Pending', site: '12bet', groupName: '大額深夜防刷組', direction: 'Deposit', notifyStatus: 'NotSent' },
@@ -1000,7 +1805,7 @@
             { date: '2026-06-27 21:14:05', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', currency: 'IDR', successAmount: 15000000, fee: 165000, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', direction: 'Deposit', notifyStatus: 'Delivered' },
             { date: '2026-06-27 18:44:30', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'TopupCard', currency: 'THB', successAmount: 500, fee: 17.5, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', direction: 'Deposit', notifyStatus: 'Delivered' },
             { date: '2026-06-27 15:30:22', sysId: 'SYS_MER_004', gateway: 'AsiaTrust', type: 'OnlineBanking', currency: 'USD', successAmount: 2500, fee: 22.5, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: 'Master Pool', direction: 'Deposit', notifyStatus: 'Delivered' },
-            { date: '2026-06-27 11:22:10', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', currency: 'MYR', successAmount: 900, fee: 18.0, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: 'Master Pool', direction: 'Deposit', notifyStatus: 'Pending' },
+            { date: '2026-06-27 11:22:10', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', currency: 'MYR', successAmount: 900, fee: 18.0, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: 'Master Pool', direction: 'Deposit', notifyStatus: 'NotSent' },
             { date: '2026-06-27 09:05:14', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', currency: 'IDR', successAmount: 800000, fee: 14400, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', direction: 'Deposit', notifyStatus: 'Delivered' },
             { date: '2026-06-27 01:20:30', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', currency: 'THB', successAmount: 0, fee: 0, successCount: 0, failedCount: 0, status: 'Completed', site: '12bet', groupName: '大額深夜防刷組', isRejected: true, direction: 'Deposit', notifyStatus: 'NotSent' },
             { date: '2026-06-26 23:14:02', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'TopupCard', currency: 'THB', successAmount: 1000, fee: 35.0, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', direction: 'Deposit', notifyStatus: 'Delivered' },
@@ -1028,11 +1833,16 @@
             }
 
             const titles = {
-                'wf-merchant': '商戶管理',
-                'wf-channel': '網關與渠道',
-                'wf-report': '商戶金流明細報表',
+                'wf-merchant': 'Payment Merchant Management',
+                'wf-channel': 'Merchant Setting',
+                'wf-report': 'Merchant Report',
+                'wf-fee': 'Channel Fee Summary',
                 'wf-override': '智慧分群與渠道對應',
-                'wf-sandbox': 'B2C 貼標與沙盒模擬'
+                'wf-sandbox': 'B2C 貼標與沙盒模擬',
+                'wf-pay-gateway': 'Payment Gateway',
+                'wf-pay-shift': 'Payment Shift Setting',
+                'wf-bank-acc': 'Bank Acc Management',
+                'wf-transfer-acc': 'Transfer Account Management'
             };
             const pageTitle = document.getElementById('page-title');
             if (pageTitle) pageTitle.innerText = titles[tabId] || '';
@@ -1053,6 +1863,20 @@
                     document.getElementById('report-end-date').value = '2026-06-30';
                 }
                 handleReportSearch();
+            } else if (tabId === 'wf-fee') {
+                if (!document.getElementById('fee-start-date').value) {
+                    document.getElementById('fee-start-date').value = '2026-06-01';
+                    document.getElementById('fee-end-date').value = '2026-06-30';
+                }
+                handleFeeSummarySearch();
+            } else if (tabId === 'wf-pay-gateway') {
+                handlePgSearch();
+            } else if (tabId === 'wf-pay-shift') {
+                initPsFilters();
+            } else if (tabId === 'wf-bank-acc') {
+                initBaTabs();
+            } else if (tabId === 'wf-transfer-acc') {
+                handleTaSearch();
             }
         }
 
@@ -1064,6 +1888,35 @@
             document.querySelectorAll('aside .whitespace-nowrap').forEach(el => {
                 el.classList.toggle('opacity-0');
             });
+        }
+
+        // 展開/收合 Finance > Setting 子選單（對應 AdminMenu 階層樹的父子節點關係）
+        function toggleFinanceSetting() {
+            const children = document.getElementById('finance-setting-children');
+            const chevron = document.getElementById('finance-setting-chevron');
+            if (!children || !chevron) return;
+            children.classList.toggle('hidden');
+            chevron.classList.toggle('rotate-180');
+        }
+
+        // 既有 Finance > Setting 選單項目（本次 demo 未實作功能，僅顯示佔位頁供選單脈絡參考）
+        function showExistingMenuPlaceholder(name, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('wf-placeholder');
+            if (target) target.classList.add('active');
+
+            document.querySelectorAll('aside nav button').forEach(el => {
+                el.classList.remove('bg-slate-800', 'text-white');
+                el.classList.add('text-slate-300');
+            });
+            if (btn) {
+                btn.classList.add('bg-slate-800', 'text-white');
+                btn.classList.remove('text-slate-300', 'text-slate-400');
+            }
+
+            const pageTitle = document.getElementById('page-title');
+            if (pageTitle) pageTitle.innerText = name;
+            document.getElementById('placeholder-menu-name').innerText = name;
         }
 
         // === 4. 商戶管理 (Tab 1) ===
@@ -1200,7 +2053,7 @@
             if (summary) summary.innerText = `Showing 1 to ${data.length} of ${channelData.length} entries`;
 
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="12" class="p-8 text-center text-slate-400 text-xs italic">查無符合條件之渠道資料</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="13" class="p-8 text-center text-slate-400 text-xs italic">查無符合條件之渠道資料</td></tr>`;
                 return;
             }
 
@@ -1232,6 +2085,7 @@
                     <td class="p-3 text-right font-mono">${c.max.toLocaleString()}</td>
                     <td class="p-3 text-right font-mono">${c.chargeFee.toFixed(2)}</td>
                     <td class="p-3 text-right font-mono">${c.perCount.toFixed(2)}</td>
+                    <td class="p-3 text-center font-mono font-bold text-slate-600">${c.matchPriority}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -1271,6 +2125,7 @@
             document.getElementById('gw-modal-max').value = c.max;
             document.getElementById('gw-modal-fee').value = c.chargeFee;
             document.getElementById('gw-modal-percount').value = c.perCount;
+            document.getElementById('gw-modal-match-priority').value = c.matchPriority;
 
             document.getElementById('gw-modal-site-12bet').checked = c.defaultSites.includes('12bet');
             document.getElementById('gw-modal-site-nova').checked = c.defaultSites.includes('Nova');
@@ -1301,6 +2156,7 @@
             c.max = Number(document.getElementById('gw-modal-max').value);
             c.chargeFee = Number(document.getElementById('gw-modal-fee').value);
             c.perCount = Number(document.getElementById('gw-modal-percount').value);
+            c.matchPriority = Number(document.getElementById('gw-modal-match-priority').value) || 1;
 
             const sites = [];
             if (document.getElementById('gw-modal-site-12bet').checked) sites.push('12bet');
@@ -1364,7 +2220,7 @@
             });
 
             renderReportView(filtered);
-            alertSimulator(`精確檢索：已篩選出 ${filtered.length} 筆交易明細金流數據！`);
+            alertSimulator(`Search complete: ${filtered.length} matching transactions found.`);
         }
 
         function renderReportView(dataArray) {
@@ -1372,6 +2228,114 @@
             reportFilteredData = dataArray;
             reportCurrentPage = 1;
             changeReportPage();
+        }
+
+        // === 6b. 手續費成本彙總 (Tab 6: Channel Fee Summary) ===
+
+        function handleFeeSummarySearch() {
+            const dateStart = document.getElementById('fee-start-date').value;
+            const dateEnd = document.getElementById('fee-end-date').value;
+            const site = document.getElementById('fee-site').value;
+            const gateway = document.getElementById('fee-gateway').value;
+
+            const filtered = merchantReportData.filter(item => {
+                const itemDate = item.date.split(' ')[0];
+                const matchStart = dateStart ? itemDate >= dateStart : true;
+                const matchEnd = dateEnd ? itemDate <= dateEnd : true;
+                const matchSite = site === 'All' ? true : item.site === site;
+                const matchGateway = gateway === 'All' ? true : item.gateway === gateway;
+                return matchStart && matchEnd && matchSite && matchGateway;
+            });
+
+            renderFeeSummary(filtered);
+        }
+
+        // 依 Gateway 彙總目前篩選範圍內「已結算成功」交易的手續費成本
+        function renderFeeSummary(dataArray) {
+            const tbody = document.getElementById('fee-summary-body');
+            if (!tbody) return;
+
+            const summary = {};
+            dataArray.forEach(item => {
+                const isSettled = !item.isRejected && item.status !== 'Pending' && item.successCount > 0;
+                if (!isSettled) return;
+                if (!summary[item.gateway]) summary[item.gateway] = { count: 0, amount: 0, fee: 0 };
+                summary[item.gateway].count++;
+                summary[item.gateway].amount += item.successAmount;
+                summary[item.gateway].fee += item.fee;
+            });
+
+            const gateways = Object.keys(summary);
+            if (gateways.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">No settled transactions in this range.</td></tr>`;
+                return;
+            }
+
+            let totalCount = 0, totalAmount = 0, totalFee = 0;
+            let rows = gateways.map(gw => {
+                const s = summary[gw];
+                totalCount += s.count;
+                totalAmount += s.amount;
+                totalFee += s.fee;
+                const ratio = s.amount > 0 ? (s.fee / s.amount * 100).toFixed(2) : '0.00';
+                return `<tr>
+                    <td class="p-2 font-bold text-slate-700">${gw}</td>
+                    <td class="p-2 text-right">${s.count}</td>
+                    <td class="p-2 text-right font-mono">${s.amount.toLocaleString()}</td>
+                    <td class="p-2 text-right font-mono text-rose-600">${s.fee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td class="p-2 text-right font-mono">${ratio}%</td>
+                </tr>`;
+            }).join('');
+
+            const totalRatio = totalAmount > 0 ? (totalFee / totalAmount * 100).toFixed(2) : '0.00';
+            rows += `<tr class="bg-slate-50 font-bold">
+                <td class="p-2">Total</td>
+                <td class="p-2 text-right">${totalCount}</td>
+                <td class="p-2 text-right font-mono">${totalAmount.toLocaleString()}</td>
+                <td class="p-2 text-right font-mono text-rose-600">${totalFee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td class="p-2 text-right font-mono">${totalRatio}%</td>
+            </tr>`;
+
+            tbody.innerHTML = rows;
+        }
+
+        // 切換模擬登入操作帳號
+        function setCurrentOperator(val) {
+            currentOperator = val;
+        }
+
+        // 顯示單筆交易的手動操作紀錄（核准/拒絕/重送）
+        function openTxLogModal(txId) {
+            const item = merchantReportData.find(i => getTransactionId(i) === txId);
+            if (!item) return;
+            const modal = document.getElementById('tx-log-modal');
+            const body = document.getElementById('tx-log-modal-body');
+            document.getElementById('tx-log-modal-txid').innerText = txId;
+
+            const log = item.actionLog || [];
+            body.innerHTML = log.length === 0
+                ? `<div class="text-xs text-slate-400 text-center py-6">No manual actions recorded for this transaction.</div>`
+                : log.slice().reverse().map(l => {
+                    const colorClass = l.action.startsWith('Approve') ? 'text-emerald-700'
+                        : l.action.startsWith('Reject') ? 'text-rose-700'
+                        : l.action.includes('Failed') ? 'text-rose-700' : 'text-blue-700';
+                    return `<div class="border border-slate-200 rounded-lg p-3 text-xs space-y-1">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold ${colorClass}">${l.action}</span>
+                            <span class="text-slate-400 font-mono">${l.time}</span>
+                        </div>
+                        <div class="text-slate-600">Operator: <span class="font-bold text-slate-800">${l.operator}</span></div>
+                    </div>`;
+                }).join('');
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeTxLogModal() {
+            const modal = document.getElementById('tx-log-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         }
 
         // 變更分頁控制
@@ -1463,19 +2427,18 @@
 
                 let statusBadge = '';
                 if (itemStatus === 'SUCCESS') {
-                    statusBadge = `<span class="bg-emerald-100 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-circle-check"></i> 成功 (SUCCESS)</span>`;
+                    statusBadge = `<span class="bg-emerald-100 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-circle-check"></i> SUCCESS</span>`;
                 } else if (itemStatus === 'FAILED') {
-                    statusBadge = `<span class="bg-rose-100 text-rose-800 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-circle-xmark"></i> 失敗 (FAILED)</span>`;
+                    statusBadge = `<span class="bg-rose-100 text-rose-800 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-circle-xmark"></i> FAILED</span>`;
                 } else if (itemStatus === 'PENDING') {
-                    statusBadge = `<span class="bg-amber-100 text-amber-800 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-spinner animate-spin"></i> 處理中</span>`;
+                    statusBadge = `<span class="bg-amber-100 text-amber-800 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-spinner animate-spin"></i> PENDING</span>`;
                 } else {
-                    statusBadge = `<span class="bg-slate-200 text-slate-700 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-ban"></i> 熔斷 (REJECTED)</span>`;
+                    statusBadge = `<span class="bg-slate-200 text-slate-700 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-ban"></i> REJECTED</span>`;
                 }
 
-                // DEP/WDL 彩色交易方向徽章
                 const typeBadge = item.direction === 'Deposit'
-                    ? `<span class="text-blue-700 bg-blue-100 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fa-solid fa-arrow-down-long"></i> Deposit</span>`
-                    : `<span class="text-purple-700 bg-purple-100 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fa-solid fa-arrow-up-long"></i> Withdrawal</span>`;
+                    ? `<span class="text-blue-700 bg-blue-100 px-2 py-0.5 rounded text-[10px] font-bold">Deposit</span>`
+                    : `<span class="text-purple-700 bg-purple-100 px-2 py-0.5 rounded text-[10px] font-bold">Withdrawal</span>`;
 
                 // Hub → B2C 通知送達狀態徽章（獨立於交易本身的成敗結果）
                 let notifyBadge = '';
@@ -1483,8 +2446,6 @@
                     notifyBadge = `<span class="bg-emerald-100 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-check-double"></i> Delivered</span>`;
                 } else if (item.notifyStatus === 'Failed') {
                     notifyBadge = `<span class="bg-rose-100 text-rose-800 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-triangle-exclamation"></i> Failed</span>`;
-                } else if (item.notifyStatus === 'Pending') {
-                    notifyBadge = `<span class="bg-amber-100 text-amber-800 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-clock"></i> Pending</span>`;
                 } else {
                     notifyBadge = `<span class="bg-slate-200 text-slate-700 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-minus"></i> Not Sent</span>`;
                 }
@@ -1507,7 +2468,9 @@
                     <td class="p-3 text-center font-sans">
                         <div class="flex items-center justify-center gap-1.5">
                             ${itemStatus !== 'SUCCESS' ? `<button onclick="approveTransaction('${pseudoTxId}')" class="text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-1 rounded text-[10px] font-bold transition-all" title="Manually approve this transaction"><i class="fa-solid fa-check"></i> Approve</button>` : ''}
+                            ${itemStatus === 'PENDING' ? `<button onclick="rejectTransaction('${pseudoTxId}')" class="text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2 py-1 rounded text-[10px] font-bold transition-all" title="Manually reject this pending transaction"><i class="fa-solid fa-ban"></i> Reject</button>` : ''}
                             <button onclick="resendTransactionToB2C('${pseudoTxId}')" class="text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-1 rounded text-[10px] font-bold transition-all" title="Resend transaction result to the B2C platform"><i class="fa-solid fa-paper-plane"></i> Resend</button>
+                            <button onclick="openTxLogModal('${pseudoTxId}')" class="text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-2 py-1 rounded text-[10px] font-bold transition-all" title="View manual action log"><i class="fa-solid fa-clock-rotate-left"></i></button>
                         </div>
                     </td>
                 `;
@@ -1516,6 +2479,7 @@
         }
 
         // 手動核准單筆交易：強制設為 SUCCESS，供人工處理 PENDING / FAILED / REJECTED 交易
+        // 權限實務上由既有 admin 後台的角色/權限系統把關（僅授權主管可觸發），此處僅記錄操作帳號與時間供追溯
         function approveTransaction(txId) {
             const item = merchantReportData.find(i => getTransactionId(i) === txId);
             if (!item) return;
@@ -1523,17 +2487,45 @@
             item.status = 'Completed';
             item.successCount = 1;
             item.failedCount = 0;
+            item.actionLog = item.actionLog || [];
+            item.actionLog.push({ action: 'Approve', operator: currentOperator, time: nowTimestamp() });
             changeReportPage();
-            alertSimulator(`✅ 交易 [${txId}] 已手動核准，狀態更新為 SUCCESS`);
+            alertSimulator(`✅ Transaction [${txId}] manually approved by ${currentOperator}. Status updated to SUCCESS`);
         }
 
-        // 重送交易結果通知給 B2C 平台端（模擬重新觸發 callback，成功後更新 notifyStatus）
+        // 手動拒絕單筆交易：僅供處理中 (PENDING) 交易人工強制熔斷為 REJECTED
+        function rejectTransaction(txId) {
+            const item = merchantReportData.find(i => getTransactionId(i) === txId);
+            if (!item) return;
+            item.isRejected = true;
+            item.status = 'Completed';
+            item.successCount = 0;
+            item.failedCount = 1;
+            item.actionLog = item.actionLog || [];
+            item.actionLog.push({ action: 'Reject', operator: currentOperator, time: nowTimestamp() });
+            changeReportPage();
+            alertSimulator(`🚫 Transaction [${txId}] manually rejected by ${currentOperator}. Status updated to REJECTED`);
+        }
+
+        // 重送交易結果通知給 B2C 平台端（模擬重新觸發 callback）。實際 callback 送達結果會記錄在 ELK，
+        // 這裡只模擬「手動重送」這個動作本身可能失敗（例如下游平台逾時/5xx），失敗時跳出錯誤訊息並保留 Failed 狀態供重試
         function resendTransactionToB2C(txId) {
             const item = merchantReportData.find(i => getTransactionId(i) === txId);
             if (!item) return;
-            item.notifyStatus = 'Delivered';
-            changeReportPage();
-            alertSimulator(`📡 已重新推送交易 [${txId}] 結果至 [${item.site}] 平台 (Callback: 200 OK)`);
+            const isSuccess = Math.random() > 0.3;
+            item.actionLog = item.actionLog || [];
+
+            if (isSuccess) {
+                item.notifyStatus = 'Delivered';
+                item.actionLog.push({ action: 'Resend (Success)', operator: currentOperator, time: nowTimestamp() });
+                changeReportPage();
+                alertSimulator(`📡 Resent transaction [${txId}] result to [${item.site}] platform (Callback: 200 OK)`);
+            } else {
+                item.notifyStatus = 'Failed';
+                item.actionLog.push({ action: 'Resend (Failed)', operator: currentOperator, time: nowTimestamp() });
+                changeReportPage();
+                alertSimulator(`⚠️ Failed to resend transaction [${txId}] to [${item.site}] platform (Callback timeout/5xx). Check ELK for details, please retry.`, true);
+            }
         }
 
         // CSV 資料導出
@@ -1579,12 +2571,12 @@
             });
 
             if (filtered.length === 0) {
-                alertSimulator("❌ 查無可用於導出的數據。");
+                alertSimulator("❌ No data available to export.");
                 return;
             }
 
             let csvContent = "﻿"; // UTF-8 BOM
-            csvContent += "交易時間,系統交易單號,來源站點,交易類型,3.0策略群組,實際商戶編號,網關,渠道類型,結算金額,結算幣別,通道手續費,交易狀態,B2C通知狀態\n";
+            csvContent += "Date/Time,Tx ID,Site,Direction,3.0 Strategy Group,Merchant ID,Gateway,Channel Type,Settlement Amount,Currency,Channel Fee,Status,B2C Status Status\n";
             filtered.forEach(item => {
                 const pseudoTxId = getTransactionId(item);
                 let itemStatus = 'PENDING';
@@ -1608,7 +2600,7 @@
             link.click();
             document.body.removeChild(link);
 
-            alertSimulator("📥 已成功匯出明細 CSV 報表檔！");
+            alertSimulator("📥 CSV report exported successfully!");
         }
 
 
@@ -2292,7 +3284,674 @@
             }
         }
 
-        // === 9. 全域初始化載入 ===
+        // === 9. Payment Gateway (wf-pay-gateway) — ported from adminsite src/features/paymentManagement ===
+
+        // groupName 對應真實 PaySetting 的 Group（PayList → PayGroup → PayChannelV2 → PaySetting 階層），
+        // 沿用 channelData 裡每個渠道本來就有的 group 欄位命名（PromptPay/TrueMoney/Online Banking/...），
+        // 不是一個叫 "Master Pool" 的固定值。
+        let paymentGatewayData = [
+            { id: 1, method: 'Deposit', payName: 'KPay', groupName: 'PromptPay', channelName: 'PromptPay', type: 'EWallet', currency: 'THB', minAmount: 20, maxAmount: 15000, amountRule: 1, fixedAmountList: '', chargeFee: 1.10, perCount: 0.50, globalStatus: 1, status: 1, pointLevel: 0, sort: 1, isSpecial: false, vipLevelList: 'All', tagsExclude: '' },
+            { id: 2, method: 'Deposit', payName: 'KPay', groupName: 'TrueMoney', channelName: 'TrueMoney', type: 'EWallet', currency: 'THB', minAmount: 30, maxAmount: 10000, amountRule: 1, fixedAmountList: '', chargeFee: 1.25, perCount: 0.00, globalStatus: 1, status: 1, pointLevel: 0, sort: 2, isSpecial: false, vipLevelList: 'All', tagsExclude: '' },
+            { id: 3, method: 'Deposit', payName: 'Help2Pay', groupName: 'Online Banking', channelName: 'Online Banking', type: 'OnlineBanking', currency: 'THB', minAmount: 50, maxAmount: 20000, amountRule: 3, fixedAmountList: '100,2000,5000,10000,30000', chargeFee: 1.50, perCount: 1.00, globalStatus: 1, status: 1, pointLevel: 1, sort: 1, isSpecial: true, vipLevelList: '1,3,5', tagsExclude: 'TAG_OVERSEAS_RISK' },
+            { id: 4, method: 'Deposit', payName: 'PayHelper', groupName: 'TopupCard', channelName: 'TopupCard', type: 'TopupCard', currency: 'THB', minAmount: 100, maxAmount: 5000, amountRule: 1, fixedAmountList: '', chargeFee: 3.50, perCount: 0.00, globalStatus: 2, status: 2, pointLevel: 0, sort: 1, isSpecial: false, vipLevelList: 'All', tagsExclude: '' },
+            { id: 5, method: 'Withdrawal', payName: 'Help2Pay', groupName: 'BankTransfer', channelName: 'BankTransfer', type: 'CardTransfer', currency: 'MYR', minAmount: 100, maxAmount: 100000, amountRule: 1, fixedAmountList: '', chargeFee: 0.00, perCount: 15.00, globalStatus: 1, status: 1, pointLevel: 0, sort: 1, isSpecial: false, vipLevelList: 'All', tagsExclude: '' },
+            { id: 6, method: 'Deposit', payName: 'AsiaTrust', groupName: 'FastBank', channelName: 'FastBank', type: 'OnlineBanking', currency: 'THB', minAmount: 500, maxAmount: 100000, amountRule: 1, fixedAmountList: '', chargeFee: 0.90, perCount: 2.00, globalStatus: 1, status: 1, pointLevel: 0, sort: 2, isSpecial: false, vipLevelList: 'All', tagsExclude: '' }
+        ];
+        let pgFilteredData = [];
+        let pgCurrentEditId = null;
+        let pgCurrentMode = 'edit';
+
+        function handlePgMethodChange() {
+            document.getElementById('pg-type').value = 'All';
+        }
+
+        function handlePgSearch() {
+            const currency = document.getElementById('pg-currency').value;
+            const method = document.getElementById('pg-method').value;
+            const gateway = document.getElementById('pg-gateway').value;
+            const type = document.getElementById('pg-type').value;
+            const globalStatus = document.getElementById('pg-global-status').value;
+            const status = document.getElementById('pg-status').value;
+            const pointLevel = document.getElementById('pg-point-level').value;
+
+            pgFilteredData = paymentGatewayData.filter(r => {
+                return (currency === 'All' || r.currency === currency)
+                    && (method === 'All' || r.method === method)
+                    && (gateway === 'All' || r.payName === gateway)
+                    && (type === 'All' || r.type === type)
+                    && (globalStatus === 'All' || String(r.globalStatus) === globalStatus)
+                    && (status === 'All' || String(r.status) === status)
+                    && (pointLevel === '' || r.pointLevel === Number(pointLevel));
+            });
+            renderPgTable();
+        }
+
+        function renderPgTable() {
+            const tbody = document.getElementById('pg-table-body');
+            if (!tbody) return;
+            if (pgFilteredData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="15" class="p-8 text-center text-slate-400 italic">No records match this filter.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = pgFilteredData.map(r => {
+                const statusToggle = `<button onclick="pgToggleStatus(${r.id})" class="w-9 h-5 rounded-full relative transition-colors ${r.status === 1 ? 'bg-emerald-500' : 'bg-slate-300'}"><span class="absolute top-0.5 ${r.status === 1 ? 'right-0.5' : 'left-0.5'} w-4 h-4 bg-white rounded-full shadow"></span></button>`;
+                return `<tr class="hover:bg-slate-50">
+                    <td class="p-3 text-center whitespace-nowrap">
+                        <button onclick="openPgEditModal(${r.id},'edit')" class="text-brand-600 hover:text-brand-800 font-bold mr-2">Edit</button>
+                        <button onclick="openPgEditModal(${r.id},'fee')" class="text-slate-500 hover:text-slate-700 font-bold">FeeSetting</button>
+                    </td>
+                    <td class="p-3 text-center">${statusToggle}</td>
+                    <td class="p-3">${r.method}</td>
+                    <td class="p-3 font-semibold">${r.payName}</td>
+                    <td class="p-3">${r.groupName}</td>
+                    <td class="p-3">${r.channelName}</td>
+                    <td class="p-3 font-mono text-slate-600">${r.type}</td>
+                    <td class="p-3 text-center font-bold">${r.currency}</td>
+                    <td class="p-3 text-right font-mono">${r.minAmount.toLocaleString()}</td>
+                    <td class="p-3 text-right font-mono">${r.maxAmount.toLocaleString()}</td>
+                    <td class="p-3">${r.amountRule === 3 ? 'Fixed' : 'Integer'}</td>
+                    <td class="p-3">${r.globalStatus === 1 ? 'Active' : 'Inactive'}</td>
+                    <td class="p-3 text-center">${r.pointLevel}</td>
+                    <td class="p-3 text-center">${r.sort}</td>
+                    <td class="p-3 text-center">${r.isSpecial ? 'Yes' : 'No'}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        function pgToggleStatus(id) {
+            const row = paymentGatewayData.find(r => r.id === id);
+            if (!row) return;
+            row.status = row.status === 1 ? 2 : 1;
+            handlePgSearch();
+            alertSimulator(`✅ ${row.payName} / ${row.channelName} status set to ${row.status === 1 ? 'Active' : 'Inactive'}`);
+        }
+
+        function openPgEditModal(id, mode) {
+            const row = paymentGatewayData.find(r => r.id === id);
+            if (!row) return;
+            pgCurrentEditId = id;
+            pgCurrentMode = mode;
+
+            document.getElementById('pg-modal-gw').innerText = row.payName;
+            document.getElementById('pg-modal-currency').innerText = row.currency;
+            document.getElementById('pg-modal-channel').innerText = row.channelName;
+            document.getElementById('pg-modal-type').innerText = row.type;
+            document.getElementById('pg-modal-title').innerText = mode === 'fee' ? 'Fee Setting' : 'Edit Payment Setting';
+
+            document.getElementById('pg-modal-edit-fields').classList.toggle('hidden', mode !== 'edit');
+            document.getElementById('pg-modal-fee-fields').classList.toggle('hidden', mode !== 'fee');
+
+            if (mode === 'edit') {
+                document.getElementById('pg-modal-pointlevel').value = row.pointLevel;
+                document.getElementById('pg-modal-sort').value = row.sort;
+                document.getElementById('pg-modal-min').value = row.minAmount;
+                document.getElementById('pg-modal-max').value = row.maxAmount;
+                document.getElementById('pg-modal-amountrule').value = row.amountRule;
+                document.getElementById('pg-modal-fixedlist').value = row.fixedAmountList;
+                document.getElementById('pg-modal-viplevel').value = row.vipLevelList;
+                document.getElementById('pg-modal-tagsexclude').value = row.tagsExclude;
+                document.getElementById('pg-modal-isspecial').checked = row.isSpecial;
+                handlePgAmountRuleChange();
+            } else {
+                document.getElementById('pg-modal-chargefee').value = row.chargeFee;
+                document.getElementById('pg-modal-percount').value = row.perCount;
+            }
+
+            const modal = document.getElementById('pg-edit-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function handlePgAmountRuleChange() {
+            const isFixed = document.getElementById('pg-modal-amountrule').value === '3';
+            document.getElementById('pg-modal-fixedlist-wrap').classList.toggle('hidden', !isFixed);
+        }
+
+        function closePgModal() {
+            const modal = document.getElementById('pg-edit-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            pgCurrentEditId = null;
+        }
+
+        function savePgModal() {
+            const row = paymentGatewayData.find(r => r.id === pgCurrentEditId);
+            if (!row) return;
+            if (pgCurrentMode === 'edit') {
+                row.pointLevel = Number(document.getElementById('pg-modal-pointlevel').value) || 0;
+                row.sort = Number(document.getElementById('pg-modal-sort').value) || 0;
+                row.minAmount = Number(document.getElementById('pg-modal-min').value) || 0;
+                row.maxAmount = Number(document.getElementById('pg-modal-max').value) || 0;
+                row.amountRule = Number(document.getElementById('pg-modal-amountrule').value);
+                row.fixedAmountList = document.getElementById('pg-modal-fixedlist').value;
+                row.vipLevelList = document.getElementById('pg-modal-viplevel').value;
+                row.tagsExclude = document.getElementById('pg-modal-tagsexclude').value;
+                row.isSpecial = document.getElementById('pg-modal-isspecial').checked;
+            } else {
+                row.chargeFee = Number(document.getElementById('pg-modal-chargefee').value) || 0;
+                row.perCount = Number(document.getElementById('pg-modal-percount').value) || 0;
+            }
+            closePgModal();
+            handlePgSearch();
+            alertSimulator(`✅ ${row.payName} / ${row.channelName} setting saved`);
+        }
+
+        function pgStubAction(name) {
+            alertSimulator(`ℹ️ "${name}" — 既有 adminsite 子功能，本次 demo 未實作，僅列出按鈕供脈絡參考`, true);
+        }
+
+        function openPgGlobalStatusModal() {
+            const gateways = [...new Set(paymentGatewayData.map(r => r.payName))];
+            const body = document.getElementById('pg-global-modal-body');
+            body.innerHTML = gateways.map(gw => {
+                const active = paymentGatewayData.filter(r => r.payName === gw).every(r => r.globalStatus === 1);
+                return `<tr>
+                    <td class="p-2 font-semibold">${gw}</td>
+                    <td class="p-2 text-center">${active ? 'Active' : 'Inactive'}</td>
+                    <td class="p-2 text-center"><button onclick="pgToggleGlobalStatus('${gw}')" class="text-brand-600 hover:text-brand-800 font-bold">Toggle</button></td>
+                </tr>`;
+            }).join('');
+            const modal = document.getElementById('pg-global-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function pgToggleGlobalStatus(gw) {
+            const rows = paymentGatewayData.filter(r => r.payName === gw);
+            const newStatus = rows.every(r => r.globalStatus === 1) ? 2 : 1;
+            rows.forEach(r => r.globalStatus = newStatus);
+            openPgGlobalStatusModal();
+            handlePgSearch();
+            alertSimulator(`✅ ${gw} GlobalStatus set to ${newStatus === 1 ? 'Active' : 'Inactive'}`);
+        }
+
+        function closePgGlobalStatusModal() {
+            const modal = document.getElementById('pg-global-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // === 10. Payment Shift Setting (wf-pay-shift) — ported from adminsite src/features/paymentShiftSetting ===
+        // 真實結構：Currency → Deposit Type → Group 三層 cascading filter，選滿三個條件後顯示 48 個半小時時段的
+        // Priority 1~3 下拉（同時段不可重複選同一渠道，改上層優先序會清空下層），Others 欄顯示未入選渠道
+
+        // Group 不是 Payment Shift Setting 自己發明的概念 — 查了 adminapi PaymentShiftController.GetSelectListAsync()
+        // 原始碼，它是直接拿 PaySetting（即「Payment Gateway」頁面本身的資料）用 Currency 分組而來，
+        // Group 就是 Payment Gateway 表格裡的 Group 欄位（groupName），跟 Payment Hub 的智慧分群無關。
+        // 這裡直接沿用 paymentGatewayData 做為單一資料來源，不另外編一份假資料。
+        let psShiftAssignments = {}; // key -> { "hour-minute": { 1: payId, 2: payId, 3: payId } }
+
+        function psGetDepositRows() {
+            return paymentGatewayData.filter(r => r.method === 'Deposit');
+        }
+
+        function psTimeSlots() {
+            const slots = [];
+            for (let h = 0; h < 24; h++) {
+                for (let m of [0, 30]) slots.push({ hour: h, minute: m });
+            }
+            return slots;
+        }
+
+        function initPsFilters() {
+            const currencies = [...new Set(psGetDepositRows().map(r => r.currency))];
+            document.getElementById('ps-currency').innerHTML = currencies.map(c => `<option value="${c}">${c}</option>`).join('');
+            handlePsCurrencyChange();
+        }
+
+        function handlePsCurrencyChange() {
+            const currency = document.getElementById('ps-currency').value;
+            const types = [...new Set(psGetDepositRows().filter(r => r.currency === currency).map(r => r.type))];
+            document.getElementById('ps-deposit-type').innerHTML = types.map(t => `<option value="${t}">${t}</option>`).join('');
+            handlePsDepositTypeChange();
+        }
+
+        function handlePsDepositTypeChange() {
+            const currency = document.getElementById('ps-currency').value;
+            const depositType = document.getElementById('ps-deposit-type').value;
+            const groups = [...new Set(psGetDepositRows().filter(r => r.currency === currency && r.type === depositType).map(r => r.groupName))];
+            document.getElementById('ps-group').innerHTML = groups.map(g => `<option value="${g}">${g}</option>`).join('');
+            renderPsTable();
+        }
+
+        function getPsPool() {
+            const currency = document.getElementById('ps-currency').value;
+            const depositType = document.getElementById('ps-deposit-type').value;
+            const group = document.getElementById('ps-group').value;
+            return psGetDepositRows()
+                .filter(r => r.currency === currency && r.type === depositType && r.groupName === group)
+                .map(r => ({ payId: r.id, payName: `${r.payName} ${r.channelName}`, status: r.status }));
+        }
+
+        function getPsKey() {
+            const currency = document.getElementById('ps-currency').value;
+            const depositType = document.getElementById('ps-deposit-type').value;
+            const group = document.getElementById('ps-group').value;
+            return `${currency}|${depositType}|${group}`;
+        }
+
+        function renderPsTable() {
+            const tbody = document.getElementById('ps-table-body');
+            const currency = document.getElementById('ps-currency').value;
+            const depositType = document.getElementById('ps-deposit-type').value;
+            const group = document.getElementById('ps-group').value;
+            if (!currency || !depositType || !group) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400 italic">請先選擇 Currency / Deposit Type / Group</td></tr>`;
+                return;
+            }
+            const key = getPsKey();
+            const pool = getPsPool();
+            if (pool.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400 italic">此組合尚無可用渠道</td></tr>`;
+                return;
+            }
+            if (!psShiftAssignments[key]) {
+                const initial = {};
+                psTimeSlots().forEach(slot => {
+                    const slotKey = `${slot.hour}-${slot.minute}`;
+                    initial[slotKey] = {};
+                    pool.slice(0, 3).forEach((c, idx) => { initial[slotKey][idx + 1] = c.payId; });
+                });
+                psShiftAssignments[key] = initial;
+            }
+            const assignments = psShiftAssignments[key];
+            const sortedPool = [...pool].sort((a, b) => (b.status === 1 ? 1 : 0) - (a.status === 1 ? 1 : 0));
+
+            tbody.innerHTML = psTimeSlots().map(slot => {
+                const slotKey = `${slot.hour}-${slot.minute}`;
+                const rowAssign = assignments[slotKey] || {};
+                const timeLabel = `${String(slot.hour).padStart(2, '0')}:${String(slot.minute).padStart(2, '0')}`;
+
+                const prioritySelects = [1, 2, 3].map(sortNum => {
+                    const usedElsewhere = [1, 2, 3].filter(s => s !== sortNum).map(s => rowAssign[s]).filter(Boolean);
+                    const options = sortedPool.map(c => {
+                        const disabled = usedElsewhere.includes(c.payId);
+                        const label = c.status === 1 ? c.payName : `${c.payName} (disable)`;
+                        const selected = rowAssign[sortNum] === c.payId ? 'selected' : '';
+                        return `<option value="${c.payId}" ${disabled ? 'disabled' : ''} ${selected}>${label}</option>`;
+                    }).join('');
+                    return `<td class="p-1"><select onchange="handlePsPriorityChange('${slotKey}', ${sortNum}, this.value)" class="w-full border border-slate-300 rounded p-1.5 text-xs bg-white outline-none focus:ring-1 focus:ring-brand-500"><option value="">-</option>${options}</select></td>`;
+                }).join('');
+
+                const chosen = [1, 2, 3].map(s => rowAssign[s]).filter(Boolean);
+                const others = pool.filter(c => !chosen.includes(c.payId))
+                    .map(c => `<span class="bg-slate-100 text-slate-500 text-[10px] px-1.5 py-0.5 rounded mr-1">${c.payName}</span>`).join('');
+
+                return `<tr class="hover:bg-slate-50">
+                    <td class="p-2 font-mono text-slate-600">${timeLabel}</td>
+                    ${prioritySelects}
+                    <td class="p-2">${others || '<span class="text-slate-300 text-[10px]">-</span>'}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        function handlePsPriorityChange(slotKey, sortNum, value) {
+            const key = getPsKey();
+            const rowAssign = psShiftAssignments[key][slotKey];
+            rowAssign[sortNum] = value ? Number(value) : undefined;
+            // 改上層優先序時，清空同一時段所有下層優先序（cascading clear）
+            for (let s = sortNum + 1; s <= 3; s++) delete rowAssign[s];
+            renderPsTable();
+        }
+
+        function submitPsShift() {
+            const key = getPsKey();
+            if (!psShiftAssignments[key]) { alertSimulator('請先選擇完整的 Currency / Deposit Type / Group', true); return; }
+            alertSimulator(`✅ Payment Shift Setting saved for ${key.replace(/\\|/g, ' / ')}`);
+        }
+
+        // === 11. Bank Acc Management (wf-bank-acc) — ported from adminsite src/features/bankCardManagement ===
+
+        let bankAccData = [
+            { id: 1, currency: 'THB', agent: 'finance_kpay_01', bankCode: 'KBANK', bankName: 'Kasikorn Bank', accountNo: '123-4-56789-0', accountName: 'ATech Finance Co', status: 'Open', supportChannels: ['LocalBank'], purposes: ['Deposit'], pointLevel: [1, 2], vipLevel: [1, 3], minAmount: 100, maxAmount: 50000, dailyLimit: 1000000, dummy: 0, sort: 1, qrCodeUrl: '', payGroup: [], tagExclude: [], memo: '' },
+            { id: 2, currency: 'THB', agent: 'finance_payhelper_normal', bankCode: 'SCB', bankName: 'Siam Commercial Bank', accountNo: '987-6-54321-0', accountName: 'ATech Finance Co', status: 'Open', supportChannels: ['EWallet'], purposes: ['Deposit', 'Withdrawal'], pointLevel: [1], vipLevel: [1, 3, 5], minAmount: 50, maxAmount: 8000, dailyLimit: 500000, dummy: 0, sort: 2, qrCodeUrl: 'https://cdn.example.com/qr/scb-002.png', payGroup: ['TrueMoney'], tagExclude: [], memo: '' },
+            { id: 3, currency: 'MYR', agent: 'finance_kpay_01', bankCode: 'MBB', bankName: 'Maybank', accountNo: '5566-7788-9900', accountName: 'ATech Finance Co', status: 'Suspend', supportChannels: ['LocalBank'], purposes: ['Deposit'], pointLevel: [], vipLevel: [], minAmount: 100, maxAmount: 50000, dailyLimit: 300000, dummy: 0, sort: 1, qrCodeUrl: '', payGroup: [], tagExclude: [], memo: '暫停中，等待重新對帳' },
+            { id: 4, currency: 'IDR', agent: 'h2p_fin_settle', bankCode: 'BCA', bankName: 'Bank Central Asia', accountNo: '2233445566', accountName: 'ATech Finance Co', status: 'Maintenance', supportChannels: ['QRPay'], purposes: ['Deposit'], pointLevel: [1, 2, 3], vipLevel: [1], minAmount: 20000, maxAmount: 500000, dailyLimit: 45000000, dummy: 0, sort: 1, qrCodeUrl: 'https://cdn.example.com/qr/bca-004.png', payGroup: ['QRIS'], tagExclude: [], memo: '' }
+        ];
+        let baActiveCurrency = 'THB';
+        let baFilteredData = [];
+        let baCurrentEditId = null;
+
+        function initBaTabs() {
+            const currencies = [...new Set(bankAccData.map(r => r.currency))];
+            if (!currencies.includes(baActiveCurrency)) baActiveCurrency = currencies[0];
+            const tabsEl = document.getElementById('ba-currency-tabs');
+            tabsEl.innerHTML = currencies.map(c => `
+                <button onclick="selectBaCurrencyTab('${c}')" class="px-5 py-3 text-sm font-bold border-b-2 transition-colors ${c === baActiveCurrency ? 'border-brand-600 text-brand-700' : 'border-transparent text-slate-400 hover:text-slate-600'}">${c}</button>
+            `).join('');
+            handleBaSearch();
+        }
+
+        function selectBaCurrencyTab(currency) {
+            baActiveCurrency = currency;
+            document.getElementById('ba-bank-code').value = 'All';
+            document.getElementById('ba-account-no').value = '';
+            initBaTabs();
+        }
+
+        function handleBaSearch() {
+            const bankCode = document.getElementById('ba-bank-code').value;
+            const accountNo = document.getElementById('ba-account-no').value.trim().toLowerCase();
+            const purposes = document.getElementById('ba-purposes').value;
+            const agent = document.getElementById('ba-agent').value;
+            const vipLevel = document.getElementById('ba-vip-level').value;
+            const status = document.getElementById('ba-status').value;
+            const pointLevel = document.getElementById('ba-point-level').value;
+            const supportChannel = document.getElementById('ba-support-channel').value;
+
+            baFilteredData = bankAccData.filter(r => {
+                return r.currency === baActiveCurrency
+                    && (bankCode === 'All' || r.bankCode === bankCode)
+                    && (accountNo === '' || r.accountNo.toLowerCase().includes(accountNo))
+                    && (purposes === 'All' || r.purposes.includes(purposes))
+                    && (agent === 'All' || r.agent === agent)
+                    && (vipLevel === 'All' || r.vipLevel.includes(Number(vipLevel)))
+                    && (status === 'All' || r.status === status)
+                    && (pointLevel === 'All' || r.pointLevel.includes(Number(pointLevel)))
+                    && (supportChannel === 'All' || r.supportChannels.includes(supportChannel));
+            });
+            renderBaTable();
+        }
+
+        function renderBaTable() {
+            const tbody = document.getElementById('ba-table-body');
+            if (baFilteredData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="16" class="p-8 text-center text-slate-400 italic">No records match this filter.</td></tr>`;
+                return;
+            }
+            const statusColors = { Initial: 'bg-slate-200 text-slate-700', Open: 'bg-emerald-100 text-emerald-700', Suspend: 'bg-rose-100 text-rose-700', Closed: 'bg-slate-700 text-white', Maintenance: 'bg-amber-100 text-amber-700' };
+            tbody.innerHTML = baFilteredData.map(r => `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-3 text-center"><button onclick="openBaModal(${r.id})" class="text-brand-600 hover:text-brand-800 font-bold">Edit</button></td>
+                    <td class="p-3">${r.agent}</td>
+                    <td class="p-3 font-mono">${r.bankCode}</td>
+                    <td class="p-3">${r.bankName}</td>
+                    <td class="p-3 font-mono">${r.accountNo}</td>
+                    <td class="p-3">${r.accountName}</td>
+                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${statusColors[r.status] || 'bg-slate-200'}">${r.status}</span></td>
+                    <td class="p-3">${r.supportChannels.join(' & ') || '-'}</td>
+                    <td class="p-3">${r.purposes.join(' & ') || 'N/A'}</td>
+                    <td class="p-3">${r.pointLevel.join(',') || '-'}</td>
+                    <td class="p-3">${r.vipLevel.join(', ') || '-'}</td>
+                    <td class="p-3 text-right font-mono">${r.minAmount.toLocaleString()}</td>
+                    <td class="p-3 text-right font-mono">${r.maxAmount.toLocaleString()}</td>
+                    <td class="p-3 text-right font-mono">${r.dailyLimit.toLocaleString()}</td>
+                    <td class="p-3 text-right font-mono">${r.dummy}</td>
+                    <td class="p-3 text-center">${r.sort}</td>
+                </tr>`).join('');
+        }
+
+        function openBaModal(id) {
+            const row = bankAccData.find(r => r.id === id);
+            if (!row) return;
+            baCurrentEditId = id;
+            document.getElementById('ba-modal-currency').value = row.currency;
+            document.getElementById('ba-modal-bankname').value = row.bankName;
+            document.getElementById('ba-modal-accountname').value = row.accountName;
+            document.getElementById('ba-modal-accountno').value = row.accountNo;
+            document.getElementById('ba-modal-min').value = row.minAmount;
+            document.getElementById('ba-modal-max').value = row.maxAmount;
+            document.getElementById('ba-modal-dailylimit').value = row.dailyLimit;
+            document.getElementById('ba-modal-purposes').value = row.purposes.join(' & ');
+            document.getElementById('ba-modal-viplevel').value = row.vipLevel.join(',');
+            document.getElementById('ba-modal-pointlevel').value = row.pointLevel.join(',');
+            document.getElementById('ba-modal-status').value = row.status;
+            document.getElementById('ba-modal-sort').value = row.sort;
+            const chanSelect = document.getElementById('ba-modal-support-channels');
+            [...chanSelect.options].forEach(o => o.selected = row.supportChannels.includes(o.value));
+            document.getElementById('ba-modal-paygroup').value = row.payGroup.join(', ');
+            document.getElementById('ba-modal-qrcode').value = row.qrCodeUrl;
+            document.getElementById('ba-modal-tagexclude').value = row.tagExclude.join(', ');
+            document.getElementById('ba-modal-memo').value = row.memo;
+            handleBaModalChannelsChange();
+
+            const modal = document.getElementById('ba-edit-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function handleBaModalChannelsChange() {
+            const selected = [...document.getElementById('ba-modal-support-channels').selectedOptions].map(o => o.value);
+            const needsPayGroup = selected.includes('EWallet') || selected.includes('QRPay');
+            document.getElementById('ba-modal-paygroup-wrap').classList.toggle('hidden', !needsPayGroup);
+            document.getElementById('ba-modal-qr-clear-btn').classList.toggle('hidden', needsPayGroup);
+        }
+
+        function closeBaModal() {
+            const modal = document.getElementById('ba-edit-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            baCurrentEditId = null;
+        }
+
+        function saveBaModal() {
+            const row = bankAccData.find(r => r.id === baCurrentEditId);
+            if (!row) return;
+            row.minAmount = Number(document.getElementById('ba-modal-min').value) || 0;
+            row.maxAmount = Number(document.getElementById('ba-modal-max').value) || 0;
+            row.dailyLimit = Number(document.getElementById('ba-modal-dailylimit').value) || 0;
+            row.vipLevel = document.getElementById('ba-modal-viplevel').value.split(',').map(s => s.trim()).filter(Boolean).map(Number);
+            row.pointLevel = document.getElementById('ba-modal-pointlevel').value.split(',').map(s => s.trim()).filter(Boolean).map(Number);
+            row.status = document.getElementById('ba-modal-status').value;
+            row.sort = Number(document.getElementById('ba-modal-sort').value) || 0;
+            row.supportChannels = [...document.getElementById('ba-modal-support-channels').selectedOptions].map(o => o.value);
+            row.payGroup = document.getElementById('ba-modal-paygroup').value.split(',').map(s => s.trim()).filter(Boolean);
+            row.tagExclude = document.getElementById('ba-modal-tagexclude').value.split(',').map(s => s.trim()).filter(Boolean);
+            row.memo = document.getElementById('ba-modal-memo').value;
+            closeBaModal();
+            handleBaSearch();
+            alertSimulator(`✅ Bank account ${row.accountNo} saved`);
+        }
+
+        // === 12. Transfer Account Management (wf-transfer-acc) — ported from adminsite src/features/transferAccountManagement ===
+
+        let transferAccountData = [
+            { id: 1, currency: 'THB', bank: 'KBank', status: 'Active', agent: 'finance_kpay_01', channel: 'LocalBank', purposes: ['Deposit'], pay: '', accountNo: '111-222-333', accountName: 'ATech SG Transfer', displayName: 'THB Transfer 01', lastUpdateTime: '2026-06-20 10:00:00', creator: 'admin01', updator: 'admin01', cryptoCurrency: '', network: '', frontendDisplayName: '', initialAmount: 500000, initialTime: '2026-01-01T00:00', timezone: '+7', reason: '', remark: '', loginUrl: '', bankLoginInfo: [{ account: 'kbank_login_01', password: '••••••' }], transferPin: '', loginPin: '', mobilePin: '', corporateId: '', ifsc: '' },
+            { id: 2, currency: 'MYR', bank: 'Maybank', status: 'Active', agent: '', channel: 'Psp', purposes: ['Withdrawal'], pay: 'KPay', accountNo: '556-667-778', accountName: 'ATech MY Transfer', displayName: 'MYR Transfer PSP', lastUpdateTime: '2026-06-18 15:30:00', creator: 'admin02', updator: 'admin01', cryptoCurrency: '', network: '', frontendDisplayName: '', initialAmount: 200000, initialTime: '2026-02-01T00:00', timezone: '+8', reason: '', remark: '', loginUrl: '', bankLoginInfo: [{ account: '', password: '' }], transferPin: '', loginPin: '', mobilePin: '', corporateId: '' },
+            { id: 3, currency: 'USD', bank: '', status: 'Active', agent: '', channel: 'CryptoWallet', purposes: ['Settlement'], pay: '', accountNo: 'TX9f8...a1c', accountName: 'ATech Crypto Settlement', displayName: 'USDT Settlement Wallet', lastUpdateTime: '2026-06-25 09:00:00', creator: 'admin01', updator: 'admin02', cryptoCurrency: 'USDT', network: 'TRC20', frontendDisplayName: 'Crypto Settlement', initialAmount: 100000, initialTime: '2026-03-01T00:00', timezone: '0', reason: '', remark: '', loginUrl: '', bankLoginInfo: [{ account: '', password: '' }], transferPin: '', loginPin: '', mobilePin: '', corporateId: '' }
+        ];
+        let taFilteredData = [];
+        let taEditId = null;
+        let taLoginInfoRows = [];
+
+        function handleTaSearch() {
+            const currency = document.getElementById('ta-currency').value;
+            const bank = document.getElementById('ta-bank').value;
+            const channel = document.getElementById('ta-channel').value;
+            const status = document.getElementById('ta-status').value;
+            const purposes = document.getElementById('ta-purposes').value;
+            const accountNo = document.getElementById('ta-account-no').value.trim().toLowerCase();
+            const agent = document.getElementById('ta-agent').value;
+
+            taFilteredData = transferAccountData.filter(r => {
+                return (currency === 'All' || r.currency === currency)
+                    && (bank === 'All' || r.bank === bank)
+                    && (channel === 'All' || r.channel === channel)
+                    && (status === 'All' || r.status === status)
+                    && (purposes === 'All' || r.purposes.includes(purposes))
+                    && (accountNo === '' || r.accountNo.toLowerCase().includes(accountNo))
+                    && (agent === 'All' || r.agent === agent);
+            });
+            renderTaTable();
+        }
+
+        function renderTaTable() {
+            const tbody = document.getElementById('ta-table-body');
+            if (taFilteredData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="14" class="p-8 text-center text-slate-400 italic">No records match this filter.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = taFilteredData.map(r => `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-3 text-center font-bold">${r.currency}</td>
+                    <td class="p-3 text-center"><button onclick="openTaModal(${r.id})" class="text-brand-600 hover:text-brand-800 font-bold">Edit</button></td>
+                    <td class="p-3">${r.bank || '-'}</td>
+                    <td class="p-3 text-center">
+                        <select onchange="taChangeStatus(${r.id}, this.value)" class="border border-slate-300 rounded p-1 text-xs bg-white outline-none">
+                            <option value="Active" ${r.status === 'Active' ? 'selected' : ''}>Active</option>
+                            <option value="Inactive" ${r.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
+                        </select>
+                    </td>
+                    <td class="p-3">${r.agent || '-'}</td>
+                    <td class="p-3">${r.channel}</td>
+                    <td class="p-3">${r.purposes.join(', ')}</td>
+                    <td class="p-3">${r.pay || '-'}</td>
+                    <td class="p-3 font-mono">${r.accountNo}</td>
+                    <td class="p-3">${r.accountName}</td>
+                    <td class="p-3">${r.displayName}</td>
+                    <td class="p-3 text-slate-500">${r.lastUpdateTime}</td>
+                    <td class="p-3">${r.creator}</td>
+                    <td class="p-3">${r.updator}</td>
+                </tr>`).join('');
+        }
+
+        function taChangeStatus(id, newStatus) {
+            const row = transferAccountData.find(r => r.id === id);
+            if (!row) return;
+            row.status = newStatus;
+            row.lastUpdateTime = nowTimestamp();
+            row.updator = currentOperator;
+            alertSimulator(`✅ Transfer account ${row.accountNo} status set to ${newStatus}`);
+        }
+
+        function openTaModal(id) {
+            taEditId = id;
+            const isCreate = id === 0;
+            document.getElementById('ta-modal-title').innerText = 'Finance Account Info';
+            document.getElementById('ta-modal-edit-warning').classList.toggle('hidden', isCreate);
+
+            const row = isCreate ? {
+                currency: 'THB', channel: 'LocalBank', status: 'Active', bank: 'KBank', agent: '', pay: '', cryptoCurrency: 'USDT', network: 'TRC20',
+                purposes: [], accountNo: '', accountName: '', displayName: '', frontendDisplayName: '', ifsc: '',
+                initialAmount: 0, initialTime: '', timezone: '+7', reason: '', remark: '', loginUrl: '',
+                bankLoginInfo: [{ account: '', password: '' }], transferPin: '', loginPin: '', mobilePin: '', corporateId: ''
+            } : transferAccountData.find(r => r.id === id);
+            if (!row) return;
+
+            document.getElementById('ta-modal-currency').value = row.currency;
+            document.getElementById('ta-modal-channel').value = row.channel;
+            document.getElementById('ta-modal-status').value = row.status;
+            document.getElementById('ta-modal-bank').value = row.bank || 'KBank';
+            document.getElementById('ta-modal-agent').value = row.agent || '';
+            document.getElementById('ta-modal-pay').value = row.pay || 'KPay';
+            document.getElementById('ta-modal-crypto-currency').value = row.cryptoCurrency || 'USDT';
+            document.getElementById('ta-modal-network').value = row.network || 'TRC20';
+            document.getElementById('ta-modal-purposes').value = row.purposes.join(',');
+            document.getElementById('ta-modal-accountno').value = row.accountNo;
+            document.getElementById('ta-modal-accountname').value = row.accountName;
+            document.getElementById('ta-modal-displayname').value = row.displayName;
+            document.getElementById('ta-modal-frontenddisplayname').value = row.frontendDisplayName || '';
+            document.getElementById('ta-modal-ifsc').value = row.ifsc || '';
+            document.getElementById('ta-modal-initialamount').value = row.initialAmount;
+            document.getElementById('ta-modal-initialtime').value = row.initialTime;
+            document.getElementById('ta-modal-timezone').value = row.timezone;
+            document.getElementById('ta-modal-reason').value = row.reason || '';
+            document.getElementById('ta-modal-remark').value = row.remark || '';
+            document.getElementById('ta-modal-loginurl').value = row.loginUrl || '';
+            document.getElementById('ta-modal-transferpin').value = row.transferPin || '';
+            document.getElementById('ta-modal-loginpin').value = row.loginPin || '';
+            document.getElementById('ta-modal-mobilepin').value = row.mobilePin || '';
+            document.getElementById('ta-modal-corporateid').value = row.corporateId || '';
+
+            taLoginInfoRows = row.bankLoginInfo.map(x => ({ ...x }));
+            renderTaLoginList();
+            handleTaModalChannelChange();
+
+            const modal = document.getElementById('ta-edit-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function handleTaModalChannelChange() {
+            const channel = document.getElementById('ta-modal-channel').value;
+            const isCrypto = channel === 'CryptoWallet';
+            const isPsp = channel === 'Psp';
+            const isLocalBank = channel === 'LocalBank';
+
+            document.getElementById('ta-modal-bank-field').classList.toggle('hidden', isCrypto);
+            document.getElementById('ta-modal-crypto-field').classList.toggle('hidden', !isCrypto);
+            document.getElementById('ta-modal-bank').disabled = !isLocalBank && !isPsp ? false : isPsp;
+            document.getElementById('ta-modal-pay-wrap').classList.toggle('hidden', !isPsp);
+            document.getElementById('ta-modal-agent-wrap').classList.toggle('hidden', isPsp);
+            document.getElementById('ta-modal-frontend-wrap').classList.toggle('hidden', !isCrypto);
+
+            const currency = document.getElementById('ta-modal-currency').value;
+            document.getElementById('ta-modal-ifsc-wrap').classList.toggle('hidden', currency !== 'INR');
+        }
+
+        function renderTaLoginList() {
+            const container = document.getElementById('ta-modal-login-list');
+            container.innerHTML = taLoginInfoRows.map((row, idx) => `
+                <div class="flex gap-2 items-center">
+                    <input type="text" placeholder="Account" value="${row.account}" onchange="taLoginInfoRows[${idx}].account=this.value" class="flex-1 border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+                    <input type="text" placeholder="Password" value="${row.password}" onchange="taLoginInfoRows[${idx}].password=this.value" class="flex-1 border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+                    ${idx > 0 ? `<button type="button" onclick="removeTaLoginInfoRow(${idx})" class="text-rose-500 hover:text-rose-700 px-1"><i class="fa-solid fa-circle-minus"></i></button>` : '<span class="w-6"></span>'}
+                </div>`).join('');
+        }
+
+        function addTaLoginInfoRow() {
+            taLoginInfoRows.push({ account: '', password: '' });
+            renderTaLoginList();
+        }
+
+        function removeTaLoginInfoRow(idx) {
+            taLoginInfoRows.splice(idx, 1);
+            renderTaLoginList();
+        }
+
+        function closeTaModal() {
+            const modal = document.getElementById('ta-edit-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            taEditId = null;
+        }
+
+        function saveTaModal() {
+            const channel = document.getElementById('ta-modal-channel').value;
+            const fields = {
+                currency: document.getElementById('ta-modal-currency').value,
+                channel: channel,
+                status: document.getElementById('ta-modal-status').value,
+                bank: channel === 'CryptoWallet' ? '' : document.getElementById('ta-modal-bank').value,
+                agent: channel === 'Psp' ? '' : document.getElementById('ta-modal-agent').value,
+                pay: channel === 'Psp' ? document.getElementById('ta-modal-pay').value : '',
+                cryptoCurrency: channel === 'CryptoWallet' ? document.getElementById('ta-modal-crypto-currency').value : '',
+                network: channel === 'CryptoWallet' ? document.getElementById('ta-modal-network').value : '',
+                purposes: document.getElementById('ta-modal-purposes').value.split(',').map(s => s.trim()).filter(Boolean),
+                accountNo: document.getElementById('ta-modal-accountno').value,
+                accountName: document.getElementById('ta-modal-accountname').value,
+                displayName: document.getElementById('ta-modal-displayname').value,
+                frontendDisplayName: channel === 'CryptoWallet' ? document.getElementById('ta-modal-frontenddisplayname').value : '',
+                ifsc: document.getElementById('ta-modal-ifsc').value,
+                initialAmount: Number(document.getElementById('ta-modal-initialamount').value) || 0,
+                initialTime: document.getElementById('ta-modal-initialtime').value,
+                timezone: document.getElementById('ta-modal-timezone').value,
+                reason: document.getElementById('ta-modal-reason').value,
+                remark: document.getElementById('ta-modal-remark').value,
+                loginUrl: document.getElementById('ta-modal-loginurl').value,
+                bankLoginInfo: taLoginInfoRows.map(x => ({ ...x })),
+                transferPin: document.getElementById('ta-modal-transferpin').value,
+                loginPin: document.getElementById('ta-modal-loginpin').value,
+                mobilePin: document.getElementById('ta-modal-mobilepin').value,
+                corporateId: document.getElementById('ta-modal-corporateid').value,
+                lastUpdateTime: nowTimestamp(),
+                updator: currentOperator
+            };
+
+            if (taEditId === 0) {
+                const newId = Math.max(0, ...transferAccountData.map(r => r.id)) + 1;
+                transferAccountData.push({ id: newId, creator: currentOperator, ...fields });
+                alertSimulator(`✅ New finance account [${fields.accountNo}] created`);
+            } else {
+                const row = transferAccountData.find(r => r.id === taEditId);
+                if (row) Object.assign(row, fields);
+                alertSimulator(`✅ Finance account [${fields.accountNo}] saved`);
+            }
+            closeTaModal();
+            handleTaSearch();
+        }
+
+        // === 13. 全域初始化載入 ===
         window.onload = function() {
             syncChannelMappedGroups();
             renderMerchantTable(merchantData);
