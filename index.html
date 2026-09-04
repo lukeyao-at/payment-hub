@@ -106,13 +106,13 @@
                     </div>
                     <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 grid grid-cols-3 gap-2 text-xs">
                         <label class="flex items-center gap-2 cursor-pointer font-medium p-1.5 hover:bg-white rounded transition-all">
-                            <input type="checkbox" id="mer-modal-site-12bet" onchange="updateMerchantSitePreview()" class="rounded text-brand-600 focus:ring-0"> 12bet
+                            <input type="checkbox" id="mer-modal-site-ot" onchange="updateMerchantSitePreview()" class="rounded text-brand-600 focus:ring-0"> OT
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer font-medium p-1.5 hover:bg-white rounded transition-all">
-                            <input type="checkbox" id="mer-modal-site-nova" onchange="updateMerchantSitePreview()" class="rounded text-brand-600 focus:ring-0"> Nova
+                            <input type="checkbox" id="mer-modal-site-nv" onchange="updateMerchantSitePreview()" class="rounded text-brand-600 focus:ring-0"> NV
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer font-medium p-1.5 hover:bg-white rounded transition-all">
-                            <input type="checkbox" id="mer-modal-site-bwing" onchange="updateMerchantSitePreview()" class="rounded text-brand-600 focus:ring-0"> Bwing
+                            <input type="checkbox" id="mer-modal-site-bw" onchange="updateMerchantSitePreview()" class="rounded text-brand-600 focus:ring-0"> BW
                         </label>
                     </div>
                     <p class="text-[11px] text-slate-400 leading-relaxed" id="mer-modal-site-hint"></p>
@@ -763,13 +763,13 @@
                                 <label class="block text-xs font-bold text-slate-500 mb-1.5" title="可複選，勾選多個站點時符合任一即列入">Site</label>
                                 <div class="flex items-center gap-3 border border-slate-300 rounded-lg px-3 h-[38px] bg-white">
                                     <label class="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer">
-                                        <input type="checkbox" id="filter-chan-site-12bet" class="rounded text-brand-600 focus:ring-0"> 12bet
+                                        <input type="checkbox" id="filter-chan-site-ot" class="rounded text-brand-600 focus:ring-0"> OT
                                     </label>
                                     <label class="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer">
-                                        <input type="checkbox" id="filter-chan-site-nova" class="rounded text-brand-600 focus:ring-0"> Nova
+                                        <input type="checkbox" id="filter-chan-site-nv" class="rounded text-brand-600 focus:ring-0"> NV
                                     </label>
                                     <label class="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer">
-                                        <input type="checkbox" id="filter-chan-site-bwing" class="rounded text-brand-600 focus:ring-0"> Bwing
+                                        <input type="checkbox" id="filter-chan-site-bw" class="rounded text-brand-600 focus:ring-0"> BW
                                     </label>
                                 </div>
                             </div>
@@ -821,9 +821,9 @@
                                     <div>
                                         <label class="block text-[10px] font-bold text-slate-500 mb-1">選擇站點</label>
                                         <select id="rule-site-filter" onchange="handleRuleFilterChange()" class="w-full border border-slate-300 rounded-lg p-2 text-xs bg-white outline-none font-bold text-brand-800">
-                                            <option value="12bet" selected>12bet</option>
-                                            <option value="Nova">Nova</option>
-                                            <option value="Bwing">Bwing</option>
+                                            <option value="OT" selected>OT</option>
+                                            <option value="NV">NV</option>
+                                            <option value="BW">BW</option>
                                         </select>
                                     </div>
                                     <div>
@@ -836,7 +836,7 @@
                                     </div>
                                 </div>
                                 <div class="flex justify-between items-center pt-1" id="group-action-row">
-                                    <h3 class="font-bold text-slate-800 text-xs" id="group-list-title">12bet (THB) 渠道與分群對照</h3>
+                                    <h3 class="font-bold text-slate-800 text-xs" id="group-list-title">OT (THB) 渠道與分群對照</h3>
                                     <button onclick="addNewGroupShell()" class="text-xs bg-brand-50 hover:bg-brand-100 text-brand-600 px-2.5 py-1 rounded-lg font-bold transition-all"><i class="fa-solid fa-plus"></i> 新增群組</button>
                                 </div>
                             </div>
@@ -997,7 +997,7 @@
                                         <div class="grid grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-6">
                                             <div class="flex justify-between border-r border-slate-800 pr-4">
                                                 <span class="text-slate-500">歸屬平台:</span>
-                                                <span id="display-member-site" class="text-white font-bold">12bet</span>
+                                                <span id="display-member-site" class="text-white font-bold">OT</span>
                                             </div>
                                             <div class="flex justify-between border-r border-slate-800 pr-4">
                                                 <span class="text-slate-500">交易幣別:</span>
@@ -1146,13 +1146,13 @@
                             <label class="block text-xs font-bold text-slate-500 mb-1.5" title="可複選，勾選多個站點時符合任一即列入">Site</label>
                             <div class="flex items-center gap-3 border border-slate-300 rounded-lg px-3 h-[38px] bg-white">
                                 <label class="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer">
-                                    <input type="checkbox" id="report-site-12bet" class="rounded text-brand-600 focus:ring-0"> 12bet
+                                    <input type="checkbox" id="report-site-ot" class="rounded text-brand-600 focus:ring-0"> OT
                                 </label>
                                 <label class="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer">
-                                    <input type="checkbox" id="report-site-nova" class="rounded text-brand-600 focus:ring-0"> Nova
+                                    <input type="checkbox" id="report-site-nv" class="rounded text-brand-600 focus:ring-0"> NV
                                 </label>
                                 <label class="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer">
-                                    <input type="checkbox" id="report-site-bwing" class="rounded text-brand-600 focus:ring-0"> Bwing
+                                    <input type="checkbox" id="report-site-bw" class="rounded text-brand-600 focus:ring-0"> BW
                                 </label>
                             </div>
                         </div>
@@ -1292,13 +1292,13 @@
                             <label class="block text-xs font-bold text-slate-500 mb-1.5" title="可複選，勾選多個站點時符合任一即列入">Site</label>
                             <div class="flex items-center gap-3 border border-slate-300 rounded-lg px-3 h-[38px] bg-white">
                                 <label class="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer">
-                                    <input type="checkbox" id="reconcile-site-12bet" class="rounded text-brand-600 focus:ring-0"> 12bet
+                                    <input type="checkbox" id="reconcile-site-ot" class="rounded text-brand-600 focus:ring-0"> OT
                                 </label>
                                 <label class="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer">
-                                    <input type="checkbox" id="reconcile-site-nova" class="rounded text-brand-600 focus:ring-0"> Nova
+                                    <input type="checkbox" id="reconcile-site-nv" class="rounded text-brand-600 focus:ring-0"> NV
                                 </label>
                                 <label class="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer">
-                                    <input type="checkbox" id="reconcile-site-bwing" class="rounded text-brand-600 focus:ring-0"> Bwing
+                                    <input type="checkbox" id="reconcile-site-bw" class="rounded text-brand-600 focus:ring-0"> BW
                                 </label>
                             </div>
                         </div>
@@ -1796,7 +1796,7 @@
 
         // Client（站台）自己認的訂單編號：demo 情境下用站台代碼 + 時間戳模擬，實際串接時應改讀 Client 端下單/callback 帶來的原始單號
         function getClientTransId(item) {
-            const prefixMap = { '12bet': 'BET12', 'Nova': 'NOVA', 'Bwing': 'BWNG' };
+            const prefixMap = { 'OT': 'BET12', 'NV': 'NOVA', 'BW': 'BWNG' };
             const prefix = prefixMap[item.site] || 'CLI';
             return prefix + '-' + item.date.replace(/[^0-9]/g, '');
         }
@@ -1872,10 +1872,10 @@
 
         // sites：商戶指派的適用站點。商戶底下所有 channel 的適用站點一律由此繼承（Merchant Channel Setting 不可單獨設定）
         let merchantData = [
-            { sysId: 'SYS_MER_001', gateway: 'KPay', currency: 'MYR', balance: 1704420, loginUser: 'finance_kpay_01', loginPass: 'Kp#Pass8812', loginUrl: 'https://merchant.kpay.example.com/login', status: 'Enable', sites: ['12bet', 'Nova', 'Bwing'] },
-            { sysId: 'SYS_MER_002', gateway: 'PayHelper', currency: 'THB', balance: 112000, loginUser: 'finance_payhelper_normal', loginPass: 'PhNormal@332', loginUrl: 'https://merchant.payhelper.example.com/login', status: 'Enable', sites: ['12bet', 'Nova', 'Bwing'] },
-            { sysId: 'SYS_MER_003', gateway: 'Help2Pay', currency: 'IDR', balance: 4414000, loginUser: 'h2p_fin_settle', loginPass: 'H2pSettle_90', loginUrl: 'https://merchant.help2pay.example.com/login', status: 'Enable', sites: ['12bet', 'Nova', 'Bwing'] },
-            { sysId: 'SYS_MER_004', gateway: 'AsiaTrust', currency: 'USD', balance: 42000, loginUser: 'asiatrust_memo', loginPass: 'AT_memo_pass', loginUrl: 'https://merchant.asiatrust.example.com/login', status: 'Disable', sites: ['12bet', 'Bwing'] }
+            { sysId: 'SYS_MER_001', gateway: 'KPay', currency: 'MYR', balance: 1704420, loginUser: 'finance_kpay_01', loginPass: 'Kp#Pass8812', loginUrl: 'https://merchant.kpay.example.com/login', status: 'Enable', sites: ['OT', 'NV', 'BW'] },
+            { sysId: 'SYS_MER_002', gateway: 'PayHelper', currency: 'THB', balance: 112000, loginUser: 'finance_payhelper_normal', loginPass: 'PhNormal@332', loginUrl: 'https://merchant.payhelper.example.com/login', status: 'Enable', sites: ['OT', 'NV', 'BW'] },
+            { sysId: 'SYS_MER_003', gateway: 'Help2Pay', currency: 'IDR', balance: 4414000, loginUser: 'h2p_fin_settle', loginPass: 'H2pSettle_90', loginUrl: 'https://merchant.help2pay.example.com/login', status: 'Enable', sites: ['OT', 'NV', 'BW'] },
+            { sysId: 'SYS_MER_004', gateway: 'AsiaTrust', currency: 'USD', balance: 42000, loginUser: 'asiatrust_memo', loginPass: 'AT_memo_pass', loginUrl: 'https://merchant.asiatrust.example.com/login', status: 'Disable', sites: ['OT', 'BW'] }
         ];
 
         // 註：channel 不再有 defaultSites / matchPriority 欄位。
@@ -1902,28 +1902,28 @@
         ];
 
         let ruleGroups = [
-            { id: 'RULE_GRP_001', aliasName: '大額深夜防刷組', site: '12bet', currency: 'THB', assignedChannels: [{ channelId: 2 }, { channelId: 10 }] },
-            { id: 'RULE_GRP_002', aliasName: '印尼盾高頻老客組', site: '12bet', currency: 'IDR', assignedChannels: [{ channelId: 3 }] },
-            { id: 'RULE_GRP_003', aliasName: '新玩家群', site: 'Nova', currency: 'THB', assignedChannels: [{ channelId: 6 }, { channelId: 8 }] },
-            { id: 'RULE_GRP_004', aliasName: 'Withdrawal安全組', site: 'Nova', currency: 'MYR', assignedChannels: [{ channelId: 7 }] },
-            { id: 'RULE_GRP_005', aliasName: '海外高風險IP組', site: '12bet', currency: 'THB', assignedChannels: [{ channelId: 9 }] }
+            { id: 'RULE_GRP_001', aliasName: '大額深夜防刷組', site: 'OT', currency: 'THB', assignedChannels: [{ channelId: 2 }, { channelId: 10 }] },
+            { id: 'RULE_GRP_002', aliasName: '印尼盾高頻老客組', site: 'OT', currency: 'IDR', assignedChannels: [{ channelId: 3 }] },
+            { id: 'RULE_GRP_003', aliasName: '新玩家群', site: 'NV', currency: 'THB', assignedChannels: [{ channelId: 6 }, { channelId: 8 }] },
+            { id: 'RULE_GRP_004', aliasName: 'Withdrawal安全組', site: 'NV', currency: 'MYR', assignedChannels: [{ channelId: 7 }] },
+            { id: 'RULE_GRP_005', aliasName: '海外高風險IP組', site: 'OT', currency: 'THB', assignedChannels: [{ channelId: 9 }] }
         ];
 
         // B2C 平台會員模擬資料
         let b2cMembers = [
-            { id: 'M001', name: 'Somchai_TH', site: '12bet', currency: 'THB', vip: 5, regDays: 450, ipCountry: 'TH', depositCount: 25, time: '02:30' },
-            { id: 'M002', name: 'Nurul_MY', site: 'Nova', currency: 'MYR', vip: 1, regDays: 3, ipCountry: 'MY', depositCount: 1, time: '14:20' },
-            { id: 'M003', name: 'Budi_ID', site: '12bet', currency: 'IDR', vip: 8, regDays: 900, ipCountry: 'ID', depositCount: 120, time: '10:00' },
-            { id: 'M004', name: 'Foreigner_X', site: '12bet', currency: 'THB', vip: 2, regDays: 60, ipCountry: 'US', depositCount: 4, time: '16:00' },
-            { id: 'M005', name: 'Generic_BW', site: 'Bwing', currency: 'THB', vip: 3, regDays: 200, ipCountry: 'TH', depositCount: 30, time: '11:00' }
+            { id: 'M001', name: 'Somchai_TH', site: 'OT', currency: 'THB', vip: 5, regDays: 450, ipCountry: 'TH', depositCount: 25, time: '02:30' },
+            { id: 'M002', name: 'Nurul_MY', site: 'NV', currency: 'MYR', vip: 1, regDays: 3, ipCountry: 'MY', depositCount: 1, time: '14:20' },
+            { id: 'M003', name: 'Budi_ID', site: 'OT', currency: 'IDR', vip: 8, regDays: 900, ipCountry: 'ID', depositCount: 120, time: '10:00' },
+            { id: 'M004', name: 'Foreigner_X', site: 'OT', currency: 'THB', vip: 2, regDays: 60, ipCountry: 'US', depositCount: 4, time: '16:00' },
+            { id: 'M005', name: 'Generic_BW', site: 'BW', currency: 'THB', vip: 3, regDays: 200, ipCountry: 'TH', depositCount: 30, time: '11:00' }
         ];
 
         // B2C 平台端貼標規則 (依序比對，第一個符合者中選)
         let b2cRules = [
-            { site: '12bet', currency: 'THB', tag: 'TAG_LATE_NIGHT_VIP', conditions: { vipMin: 5, timeStart: '00:00', timeEnd: '06:00' } },
-            { site: '12bet', currency: 'THB', tag: 'TAG_OVERSEAS_RISK', conditions: { ipCountryNot: 'TH' } },
-            { site: '12bet', currency: 'IDR', tag: 'TAG_HIGH_FREQ_IDR', conditions: { regDaysMin: 30 } },
-            { site: 'Nova', currency: 'MYR', tag: 'TAG_NEW_PLAYER', conditions: { regDaysMax: 7 } }
+            { site: 'OT', currency: 'THB', tag: 'TAG_LATE_NIGHT_VIP', conditions: { vipMin: 5, timeStart: '00:00', timeEnd: '06:00' } },
+            { site: 'OT', currency: 'THB', tag: 'TAG_OVERSEAS_RISK', conditions: { ipCountryNot: 'TH' } },
+            { site: 'OT', currency: 'IDR', tag: 'TAG_HIGH_FREQ_IDR', conditions: { regDaysMin: 30 } },
+            { site: 'NV', currency: 'MYR', tag: 'TAG_NEW_PLAYER', conditions: { regDaysMax: 7 } }
         ];
 
         // B2C 標籤 <-> Payment Hub 群組 1:1 綁定
@@ -1938,21 +1938,21 @@
         // notifyStatus 追蹤 Hub → B2C 平台的通知送達狀態，與交易本身的成敗結果是兩個獨立維度
         // Delivered：B2C 已確認收到 / Failed：送過但失敗（需重送）/ NotSent：Hub 尚未嘗試送出（通知為同步 callback，僅有成功/失敗兩種結果，無 Pending 中間態）
         let merchantReportData = [
-            { date: '2026-06-28 10:30:22', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', channel: 'Online Banking', currency: 'THB', successAmount: 3500, fee: 52.5, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', Method: 'Deposit', notifyStatus: 'Delivered', actionLog: [ { action: 'Approve', operator: 'finance_manager_01', time: '2026-06-28 10:32:05' } ] },
-            { date: '2026-06-28 09:12:44', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', channel: 'TrueMoney', currency: 'MYR', successAmount: 450, fee: 9.0, successCount: 1, failedCount: 0, status: 'Pending', site: '12bet', groupName: '大額深夜防刷組', Method: 'Deposit', notifyStatus: 'NotSent', actionLog: [ { action: 'Resend (Failed)', operator: 'finance_manager_01', time: '2026-06-28 09:20:11' } ] },
-            { date: '2026-06-28 02:45:18', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'EWallet', channel: 'TrueMoney', currency: 'THB', successAmount: 0, fee: 0, successCount: 0, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', isRejected: true, Method: 'Deposit', notifyStatus: 'Failed', actionLog: [ { action: 'Reject', operator: 'risk_officer_03', time: '2026-06-28 03:10:45' }, { action: 'Resend (Failed)', operator: 'ops_supervisor_02', time: '2026-06-28 03:15:02' } ] },
-            { date: '2026-06-27 23:55:12', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', channel: 'PromptPay', currency: 'THB', successAmount: 1500, fee: 16.5, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: '新玩家群', Method: 'Deposit', notifyStatus: 'Failed' },
-            { date: '2026-06-27 21:14:05', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', channel: 'Online Banking', currency: 'IDR', successAmount: 15000000, fee: 165000, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', Method: 'Deposit', notifyStatus: 'Delivered' },
-            { date: '2026-06-27 18:44:30', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'TopupCard', channel: 'TopupCard', currency: 'THB', successAmount: 500, fee: 17.5, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', Method: 'Deposit', notifyStatus: 'Delivered' },
-            { date: '2026-06-27 15:30:22', sysId: 'SYS_MER_004', gateway: 'AsiaTrust', type: 'OnlineBanking', channel: 'FastBank', currency: 'USD', successAmount: 2500, fee: 22.5, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: 'Master Pool', Method: 'Deposit', notifyStatus: 'Delivered' },
-            { date: '2026-06-27 11:22:10', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', channel: 'TrueMoney', currency: 'MYR', successAmount: 900, fee: 18.0, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: 'Master Pool', Method: 'Deposit', notifyStatus: 'NotSent' },
-            { date: '2026-06-27 09:05:14', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', channel: 'GoPay', currency: 'IDR', successAmount: 800000, fee: 14400, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', Method: 'Deposit', notifyStatus: 'Delivered' },
-            { date: '2026-06-27 01:20:30', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', channel: 'Online Banking', currency: 'THB', successAmount: 0, fee: 0, successCount: 0, failedCount: 0, status: 'Completed', site: '12bet', groupName: '大額深夜防刷組', isRejected: true, Method: 'Deposit', notifyStatus: 'NotSent', actionLog: [ { action: 'Reject', operator: 'risk_officer_03', time: '2026-06-27 01:45:10' } ] },
-            { date: '2026-06-26 23:14:02', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'TopupCard', channel: 'TopupCard', currency: 'THB', successAmount: 1000, fee: 35.0, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', Method: 'Deposit', notifyStatus: 'Delivered' },
-            { date: '2026-06-26 21:04:18', sysId: 'SYS_MER_004', gateway: 'AsiaTrust', type: 'OnlineBanking', channel: 'FastBank', currency: 'USD', successAmount: 12000, fee: 108, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: 'Master Pool', Method: 'Deposit', notifyStatus: 'Delivered' },
-            { date: '2026-06-26 19:45:30', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', channel: 'TrueMoney', currency: 'MYR', successAmount: 3200, fee: 15, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: 'Withdrawal安全組', Method: 'Withdrawal', notifyStatus: 'Delivered' },
-            { date: '2026-06-26 16:30:12', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'CardTransfer', channel: 'BankTransfer', currency: 'MYR', successAmount: 8500, fee: 15, successCount: 0, failedCount: 0, status: 'Pending', site: 'Nova', groupName: 'Withdrawal安全組', Method: 'Withdrawal', notifyStatus: 'NotSent' },
-            { date: '2026-06-26 14:12:05', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', channel: 'Online Banking', currency: 'IDR', successAmount: 45000000, fee: 495000, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '印尼盾高頻老客組', Method: 'Deposit', notifyStatus: 'Delivered' }
+            { date: '2026-06-28 10:30:22', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', channel: 'Online Banking', currency: 'THB', successAmount: 3500, fee: 52.5, successCount: 1, failedCount: 0, status: 'Completed', site: 'BW', groupName: 'Master Pool', Method: 'Deposit', notifyStatus: 'Delivered', actionLog: [ { action: 'Approve', operator: 'finance_manager_01', time: '2026-06-28 10:32:05' } ] },
+            { date: '2026-06-28 09:12:44', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', channel: 'TrueMoney', currency: 'MYR', successAmount: 450, fee: 9.0, successCount: 1, failedCount: 0, status: 'Pending', site: 'OT', groupName: '大額深夜防刷組', Method: 'Deposit', notifyStatus: 'NotSent', actionLog: [ { action: 'Resend (Failed)', operator: 'finance_manager_01', time: '2026-06-28 09:20:11' } ] },
+            { date: '2026-06-28 02:45:18', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'EWallet', channel: 'TrueMoney', currency: 'THB', successAmount: 0, fee: 0, successCount: 0, failedCount: 0, status: 'Completed', site: 'OT', groupName: '海外高風險IP組', isRejected: true, Method: 'Deposit', notifyStatus: 'Failed', actionLog: [ { action: 'Reject', operator: 'risk_officer_03', time: '2026-06-28 03:10:45' }, { action: 'Resend (Failed)', operator: 'ops_supervisor_02', time: '2026-06-28 03:15:02' } ] },
+            { date: '2026-06-27 23:55:12', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', channel: 'PromptPay', currency: 'THB', successAmount: 1500, fee: 16.5, successCount: 1, failedCount: 0, status: 'Completed', site: 'NV', groupName: '新玩家群', Method: 'Deposit', notifyStatus: 'Failed' },
+            { date: '2026-06-27 21:14:05', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', channel: 'Online Banking', currency: 'IDR', successAmount: 15000000, fee: 165000, successCount: 1, failedCount: 0, status: 'Completed', site: 'BW', groupName: 'Master Pool', Method: 'Deposit', notifyStatus: 'Delivered' },
+            { date: '2026-06-27 18:44:30', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'TopupCard', channel: 'TopupCard', currency: 'THB', successAmount: 500, fee: 17.5, successCount: 1, failedCount: 0, status: 'Completed', site: 'OT', groupName: '海外高風險IP組', Method: 'Deposit', notifyStatus: 'Delivered' },
+            { date: '2026-06-27 15:30:22', sysId: 'SYS_MER_004', gateway: 'AsiaTrust', type: 'OnlineBanking', channel: 'FastBank', currency: 'USD', successAmount: 2500, fee: 22.5, successCount: 1, failedCount: 0, status: 'Completed', site: 'OT', groupName: 'Master Pool', Method: 'Deposit', notifyStatus: 'Delivered' },
+            { date: '2026-06-27 11:22:10', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', channel: 'TrueMoney', currency: 'MYR', successAmount: 900, fee: 18.0, successCount: 1, failedCount: 0, status: 'Completed', site: 'NV', groupName: 'Master Pool', Method: 'Deposit', notifyStatus: 'NotSent' },
+            { date: '2026-06-27 09:05:14', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', channel: 'GoPay', currency: 'IDR', successAmount: 800000, fee: 14400, successCount: 1, failedCount: 0, status: 'Completed', site: 'BW', groupName: 'Master Pool', Method: 'Deposit', notifyStatus: 'Delivered' },
+            { date: '2026-06-27 01:20:30', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', channel: 'Online Banking', currency: 'THB', successAmount: 0, fee: 0, successCount: 0, failedCount: 0, status: 'Completed', site: 'OT', groupName: '大額深夜防刷組', isRejected: true, Method: 'Deposit', notifyStatus: 'NotSent', actionLog: [ { action: 'Reject', operator: 'risk_officer_03', time: '2026-06-27 01:45:10' } ] },
+            { date: '2026-06-26 23:14:02', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'TopupCard', channel: 'TopupCard', currency: 'THB', successAmount: 1000, fee: 35.0, successCount: 1, failedCount: 0, status: 'Completed', site: 'OT', groupName: '海外高風險IP組', Method: 'Deposit', notifyStatus: 'Delivered' },
+            { date: '2026-06-26 21:04:18', sysId: 'SYS_MER_004', gateway: 'AsiaTrust', type: 'OnlineBanking', channel: 'FastBank', currency: 'USD', successAmount: 12000, fee: 108, successCount: 1, failedCount: 0, status: 'Completed', site: 'OT', groupName: 'Master Pool', Method: 'Deposit', notifyStatus: 'Delivered' },
+            { date: '2026-06-26 19:45:30', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', channel: 'TrueMoney', currency: 'MYR', successAmount: 3200, fee: 15, successCount: 1, failedCount: 0, status: 'Completed', site: 'NV', groupName: 'Withdrawal安全組', Method: 'Withdrawal', notifyStatus: 'Delivered' },
+            { date: '2026-06-26 16:30:12', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'CardTransfer', channel: 'BankTransfer', currency: 'MYR', successAmount: 8500, fee: 15, successCount: 0, failedCount: 0, status: 'Pending', site: 'NV', groupName: 'Withdrawal安全組', Method: 'Withdrawal', notifyStatus: 'NotSent' },
+            { date: '2026-06-26 14:12:05', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', channel: 'Online Banking', currency: 'IDR', successAmount: 45000000, fee: 495000, successCount: 1, failedCount: 0, status: 'Completed', site: 'OT', groupName: '印尼盾高頻老客組', Method: 'Deposit', notifyStatus: 'Delivered' }
         ];
 
         // Merchant Operator 僅能查詢最近 3 個月資料，Reconciliation Report 僅能查詢最近 1 年資料
@@ -2244,9 +2244,9 @@
             document.getElementById('modal-login-url').value = m.loginUrl || '';
 
             const mSites = m.sites || [];
-            document.getElementById('mer-modal-site-12bet').checked = mSites.includes('12bet');
-            document.getElementById('mer-modal-site-nova').checked = mSites.includes('Nova');
-            document.getElementById('mer-modal-site-bwing').checked = mSites.includes('Bwing');
+            document.getElementById('mer-modal-site-ot').checked = mSites.includes('OT');
+            document.getElementById('mer-modal-site-nv').checked = mSites.includes('NV');
+            document.getElementById('mer-modal-site-bw').checked = mSites.includes('BW');
             updateMerchantSitePreview();
 
             document.getElementById('radio-enable').checked = m.status === 'Enable';
@@ -2293,9 +2293,9 @@
 
         function readMerchantModalSites() {
             const sites = [];
-            if (document.getElementById('mer-modal-site-12bet').checked) sites.push('12bet');
-            if (document.getElementById('mer-modal-site-nova').checked) sites.push('Nova');
-            if (document.getElementById('mer-modal-site-bwing').checked) sites.push('Bwing');
+            if (document.getElementById('mer-modal-site-ot').checked) sites.push('OT');
+            if (document.getElementById('mer-modal-site-nv').checked) sites.push('NV');
+            if (document.getElementById('mer-modal-site-bw').checked) sites.push('BW');
             return sites;
         }
 
@@ -2409,9 +2409,9 @@
             const type = document.getElementById('filter-chan-type').value;
             const channel = document.getElementById('filter-chan-channel').value;
             const status = document.getElementById('filter-chan-status').value;
-            const selectedSites = ['12bet', 'nova', 'bwing']
+            const selectedSites = ['ot', 'nv', 'bw']
                 .filter(s => document.getElementById(`filter-chan-site-${s}`).checked)
-                .map(s => s === '12bet' ? '12bet' : s.charAt(0).toUpperCase() + s.slice(1));
+                .map(s => ({ ot: 'OT', nv: 'NV', bw: 'BW' })[s]);
 
             const filtered = channelData.filter(c => {
                 const matchCurrency = currency === 'All' ? true : c.currency === currency;
@@ -2496,9 +2496,9 @@
 
         // Site 篩選改為複選 checkbox：不勾任何一個 = 不篩選，勾選多個 = 符合任一站點即列入
         function getSelectedReportSites() {
-            return ['12bet', 'nova', 'bwing']
+            return ['ot', 'nv', 'bw']
                 .filter(s => document.getElementById(`report-site-${s}`).checked)
-                .map(s => s === '12bet' ? '12bet' : s.charAt(0).toUpperCase() + s.slice(1));
+                .map(s => ({ ot: 'OT', nv: 'NV', bw: 'BW' })[s]);
         }
 
         // 明細報表多條件交叉搜尋
@@ -2871,9 +2871,9 @@
         // 共用同一份 merchantReportData，只是換一組欄位／篩選條件呈現，避免另外維護一份假資料
 
         function getReconcileSelectedSites() {
-            return ['12bet', 'nova', 'bwing']
+            return ['ot', 'nv', 'bw']
                 .filter(s => document.getElementById(`reconcile-site-${s}`).checked)
-                .map(s => s === '12bet' ? '12bet' : s.charAt(0).toUpperCase() + s.slice(1));
+                .map(s => ({ ot: 'OT', nv: 'NV', bw: 'BW' })[s]);
         }
 
         function filterReconcileData() {
@@ -3017,7 +3017,7 @@
 
         function getActiveSite() {
             const el = document.getElementById('rule-site-filter');
-            return el ? el.value : '12bet';
+            return el ? el.value : 'OT';
         }
 
         function getActiveCurrency() {
@@ -3533,7 +3533,7 @@
             const member = b2cMembers.find(m => m.id === selectedB2CMemberId);
             if (!member) return;
 
-            if (member.site === 'Bwing') {
+            if (member.site === 'BW') {
                 simulatedB2CResult = { tag: '無特定標籤 (通用常規流)', code: '[]' };
                 updateLabelDisplay(simulatedB2CResult.tag, '[] (空陣列)', true);
                 return;
