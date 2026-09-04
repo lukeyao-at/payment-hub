@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Hub 系統管理後台</title>
+    <title>Payment Hub</title>
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Noto Sans TC 字體 -->
@@ -51,8 +51,8 @@
 
     <!-- 1. 編輯商戶帳密與開關彈窗 (Merchant Modal) -->
     <div id="edit-merchant-modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 backdrop-blur-sm transition-all duration-300">
-        <div class="bg-white rounded-2xl shadow-2xl w-[480px] overflow-hidden transform scale-95 transition-transform duration-300" id="modal-container">
-            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+        <div class="bg-white rounded-2xl shadow-2xl w-[480px] overflow-hidden transform scale-95 transition-transform duration-300 max-h-[90vh] flex flex-col" id="modal-container">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center flex-shrink-0">
                 <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
                     <i class="fa-solid fa-user-shield text-brand-600"></i> 設定商戶狀態與三方資訊
                 </h3>
@@ -60,7 +60,7 @@
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
-            <div class="p-6 space-y-6">
+            <div class="p-6 space-y-6 overflow-y-auto">
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex justify-between items-center">
                     <div>
                         <div class="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">商戶編號</div>
@@ -102,6 +102,24 @@
 
                 <div class="space-y-3">
                     <div class="text-xs font-bold text-slate-700 flex items-center gap-2 border-b border-slate-100 pb-2">
+                        <i class="fa-solid fa-share-nodes text-brand-500"></i> 指派適用站點 (Site Allocation)
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 grid grid-cols-3 gap-2 text-xs">
+                        <label class="flex items-center gap-2 cursor-pointer font-medium p-1.5 hover:bg-white rounded transition-all">
+                            <input type="checkbox" id="mer-modal-site-12bet" onchange="updateMerchantSitePreview()" class="rounded text-brand-600 focus:ring-0"> 12bet
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer font-medium p-1.5 hover:bg-white rounded transition-all">
+                            <input type="checkbox" id="mer-modal-site-nova" onchange="updateMerchantSitePreview()" class="rounded text-brand-600 focus:ring-0"> Nova
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer font-medium p-1.5 hover:bg-white rounded transition-all">
+                            <input type="checkbox" id="mer-modal-site-bwing" onchange="updateMerchantSitePreview()" class="rounded text-brand-600 focus:ring-0"> Bwing
+                        </label>
+                    </div>
+                    <p class="text-[11px] text-slate-400 leading-relaxed" id="mer-modal-site-hint"></p>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="text-xs font-bold text-slate-700 flex items-center gap-2 border-b border-slate-100 pb-2">
                         <i class="fa-solid fa-power-off text-brand-500"></i> 商戶狀態設定
                     </div>
                     <div class="flex items-center gap-4 bg-slate-50 p-2 rounded-lg border border-slate-200">
@@ -116,7 +134,7 @@
                     </div>
                 </div>
             </div>
-            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2.5">
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2.5 flex-shrink-0">
                 <button onclick="closeEditModal()" class="px-5 py-2 border border-slate-300 rounded-lg text-slate-600 hover:bg-white text-sm font-medium transition-colors">取消</button>
                 <button onclick="saveMerchantSettings()" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors flex items-center gap-1.5">
                     <i class="fa-solid fa-floppy-disk"></i> 儲存設定
@@ -187,29 +205,11 @@
 
                 <div class="space-y-2">
                     <div class="text-xs font-bold text-slate-700 flex items-center gap-2 border-b pb-1">
-                        <i class="fa-solid fa-arrow-down-1-9 text-brand-500"></i> Match Setting 配對順序 (Fallback Priority)
+                        <i class="fa-solid fa-lock text-slate-400"></i> 適用站點（唯讀・繼承自商戶）
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">配對順序 (Sort)</label>
-                        <input type="number" id="gw-modal-match-priority" min="1" class="w-32 border border-slate-300 rounded-lg p-2 text-sm font-mono focus:ring-2 focus:ring-brand-500 outline-none">
-                        <p class="text-[11px] text-slate-400 mt-1">當該筆交易所屬群組沒有設定 Payment Shift 順序時，同 Gateway/Merchant/Type/Currency 組合會依此數字由小到大 fallback 配對（數字越小越優先）。</p>
-                    </div>
-                </div>
-
-                <div class="space-y-3">
-                    <div class="text-xs font-bold text-slate-700 flex items-center gap-2 border-b pb-1">
-                        <i class="fa-solid fa-share-nodes text-brand-500"></i> 預設指派適用站點 (Gateway Allocation)
-                    </div>
-                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 grid grid-cols-3 gap-2 text-xs">
-                        <label class="flex items-center gap-2 cursor-pointer font-medium p-1.5 hover:bg-white rounded transition-all">
-                            <input type="checkbox" id="gw-modal-site-12bet" class="rounded text-brand-600 focus:ring-0"> 12bet
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer font-medium p-1.5 hover:bg-white rounded transition-all">
-                            <input type="checkbox" id="gw-modal-site-nova" class="rounded text-brand-600 focus:ring-0"> Nova
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer font-medium p-1.5 hover:bg-white rounded transition-all">
-                            <input type="checkbox" id="gw-modal-site-bwing" class="rounded text-brand-600 focus:ring-0"> Bwing
-                        </label>
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
+                        <div class="flex flex-wrap gap-1.5" id="gw-modal-inherited-sites"></div>
+                        <p class="text-[11px] text-slate-400 leading-relaxed">此渠道的適用站點由所屬商戶 <span class="font-mono font-bold text-slate-600" id="gw-modal-inherited-from">-</span> 決定。要調整請至 <b class="text-slate-600">Merchant Management</b>，本頁不可單獨設定。</p>
                     </div>
                 </div>
             </div>
@@ -592,13 +592,16 @@
                 </button>
                 <div id="finance-payment-hub-children" class="space-y-1 pl-4 border-l border-slate-800 ml-4">
                     <button onclick="switchTab('wf-merchant')" id="btn-wf-merchant" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
-                        Payment Merchant Management
+                        Merchant Management
                     </button>
                     <button onclick="switchTab('wf-channel')" id="btn-wf-channel" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
                         Merchant Channel Setting
                     </button>
                     <button onclick="switchTab('wf-report')" id="btn-wf-report" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
-                        Merchant Report
+                        Merchant Operator
+                    </button>
+                    <button onclick="switchTab('wf-reconcile')" id="btn-wf-reconcile" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
+                        Reconciliation Report
                     </button>
                     <button onclick="switchTab('wf-override')" id="btn-wf-override" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-300 text-sm flex items-center whitespace-nowrap overflow-hidden">
                         智慧分群與渠道對應
@@ -635,7 +638,7 @@
         <div class="flex-1 overflow-y-auto p-6">
             <div class="max-w-[1450px] mx-auto space-y-6">
 
-                <!-- ================= TAB 1: Payment Merchant Management ================= -->
+                <!-- ================= TAB 1: Merchant Management ================= -->
                 <div id="wf-merchant" class="tab-content active space-y-6">
                     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-end gap-4 flex-wrap">
                         <div class="w-48">
@@ -684,7 +687,7 @@
                                         <th class="p-4 w-44">Merchant ID</th>
                                         <th class="p-4">Gateway</th>
                                         <th class="p-4">Currency</th>
-                                        <th class="p-4">Balance</th>
+                                        <th class="p-4 text-brand-800 bg-brand-50/50 font-bold" title="此商戶指派的站點；底下所有 channel 自動繼承">Assigned Sites</th>
                                         <th class="p-4 text-center w-32">Status</th>
                                         <th class="p-4 text-center w-32">Action</th>
                                     </tr>
@@ -756,16 +759,22 @@
                                     <option value="Inactive">關閉停用</option>
                                 </select>
                             </div>
-                        </div>
-                        <div class="flex pt-2 border-t border-slate-100 justify-between flex-wrap gap-2">
-                            <div class="flex gap-2 flex-wrap">
-                                <button onclick="pgStubAction('Crypto Setting')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-xs px-3 py-2.5 rounded-lg transition-colors">Crypto Setting</button>
-                                <button onclick="pgStubAction('Auto Withdrawal Rule')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-xs px-3 py-2.5 rounded-lg transition-colors">Auto Withdrawal Rule</button>
-                                <button onclick="pgStubAction('Auto Verify Rule')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-xs px-3 py-2.5 rounded-lg transition-colors">Auto Verify Rule</button>
-                                <button onclick="pgStubAction('Withdrawal Option Status')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-xs px-3 py-2.5 rounded-lg transition-colors">Withdrawal Option Status</button>
-                                <button onclick="pgStubAction('Bank Maintenance')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-xs px-3 py-2.5 rounded-lg transition-colors">Bank Maintenance</button>
-                                <button onclick="pgStubAction('Deposit Transaction Quantity Limit')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-xs px-3 py-2.5 rounded-lg transition-colors">Deposit Txn Qty Limit</button>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5" title="可複選，勾選多個站點時符合任一即列入">Site</label>
+                                <div class="flex items-center gap-3 border border-slate-300 rounded-lg px-3 h-[38px] bg-white">
+                                    <label class="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer">
+                                        <input type="checkbox" id="filter-chan-site-12bet" class="rounded text-brand-600 focus:ring-0"> 12bet
+                                    </label>
+                                    <label class="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer">
+                                        <input type="checkbox" id="filter-chan-site-nova" class="rounded text-brand-600 focus:ring-0"> Nova
+                                    </label>
+                                    <label class="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer">
+                                        <input type="checkbox" id="filter-chan-site-bwing" class="rounded text-brand-600 focus:ring-0"> Bwing
+                                    </label>
+                                </div>
                             </div>
+                        </div>
+                        <div class="flex pt-2 border-t border-slate-100 justify-end flex-wrap gap-2">
                             <button onclick="handleChannelSearch()" class="bg-brand-600 hover:bg-brand-700 text-white font-medium text-xs px-6 py-2 rounded-lg shadow-sm transition-all flex items-center gap-1.5">
                                 <i class="fa-solid fa-search"></i> 搜尋
                             </button>
@@ -784,12 +793,11 @@
                                         <th class="p-3 text-blue-800 bg-blue-50/50 font-bold">Merchant ID</th>
                                         <th class="p-3">Group</th>
                                         <th class="p-3">Channel</th>
-                                        <th class="p-3 text-brand-800 bg-brand-50/50 font-bold">Assigned Sites</th>
+                                        <th class="p-3 text-brand-800 bg-brand-50/50 font-bold" title="唯讀，繼承自 Merchant Management 的商戶站點指派">Assigned Sites <i class="fa-solid fa-lock text-[9px] text-slate-400"></i></th>
                                         <th class="p-3 text-center font-bold">Currency</th>
                                         <th class="p-3 text-right font-bold">Min Limit</th>
                                         <th class="p-3 text-right font-bold">Max Limit</th>
                                         <th class="p-3 text-right font-bold">Fixed Fee</th>
-                                        <th class="p-3 text-center font-bold" title="Match Setting fallback order used when the group has no Payment Shift priority configured">Sort</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100" id="channel-table-body">
@@ -1107,18 +1115,22 @@
                     </div>
                 </div>
 
-                <!-- ================= TAB 5: 商戶金流明細報表 (wf-report) ================= -->
+                <!-- ================= TAB 5: 商戶金流明細報表 (wf-report / Merchant Operator) ================= -->
                 <div id="wf-report" class="tab-content space-y-6">
+
+                    <div class="bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info"></i> 僅能查詢最近 3 個月內的資料，Start Date / End Date 選擇範圍將自動限制在此區間內
+                    </div>
 
                     <!-- 篩選控制卡片 (Filter Controls Card) -->
                     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-end gap-4 flex-wrap">
                         <div class="w-40">
                             <label class="block text-xs font-bold text-slate-500 mb-1.5">Start Date (From)</label>
-                            <input type="date" id="report-start-date" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                            <input type="date" id="report-start-date" onchange="handleReportDateRangeChange('start')" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
                         </div>
                         <div class="w-40">
                             <label class="block text-xs font-bold text-slate-500 mb-1.5">End Date (To)</label>
-                            <input type="date" id="report-end-date" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                            <input type="date" id="report-end-date" onchange="handleReportDateRangeChange('end')" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
                         </div>
                         <div class="w-44">
                             <label class="block text-xs font-bold text-slate-500 mb-1.5">Merchant ID</label>
@@ -1130,14 +1142,19 @@
                                 <option value="SYS_MER_004">SYS_MER_004 (AsiaTrust)</option>
                             </select>
                         </div>
-                        <div class="w-36">
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Site</label>
-                            <select id="report-site" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
-                                <option value="All">All Sites</option>
-                                <option value="12bet">12bet</option>
-                                <option value="Nova">Nova</option>
-                                <option value="Bwing">Bwing</option>
-                            </select>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5" title="可複選，勾選多個站點時符合任一即列入">Site</label>
+                            <div class="flex items-center gap-3 border border-slate-300 rounded-lg px-3 h-[38px] bg-white">
+                                <label class="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer">
+                                    <input type="checkbox" id="report-site-12bet" class="rounded text-brand-600 focus:ring-0"> 12bet
+                                </label>
+                                <label class="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer">
+                                    <input type="checkbox" id="report-site-nova" class="rounded text-brand-600 focus:ring-0"> Nova
+                                </label>
+                                <label class="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer">
+                                    <input type="checkbox" id="report-site-bwing" class="rounded text-brand-600 focus:ring-0"> Bwing
+                                </label>
+                            </div>
                         </div>
                         <div class="w-36">
                             <label class="block text-xs font-bold text-slate-500 mb-1.5">Method</label>
@@ -1181,7 +1198,7 @@
                             </select>
                         </div>
                         <div class="w-40">
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5">B2C Status</label>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Client Status</label>
                             <select id="report-notify-status" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
                                 <option value="All">All</option>
                                 <option value="Delivered">Delivered</option>
@@ -1190,20 +1207,8 @@
                             </select>
                         </div>
                         <div class="w-48">
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Tx ID</label>
-                            <input type="text" id="report-txid" placeholder="Search by Tx ID..." class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
-                        </div>
-                        <div class="w-48">
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Payment Hub Strategy Group Name</label>
-                            <input type="text" id="report-group" placeholder="Search by group name..." class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
-                        </div>
-                        <div class="w-48">
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Operator (Simulated Login)</label>
-                            <select id="report-operator" onchange="setCurrentOperator(this.value)" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm font-mono">
-                                <option value="finance_manager_01">finance_manager_01</option>
-                                <option value="ops_supervisor_02">ops_supervisor_02</option>
-                                <option value="risk_officer_03">risk_officer_03</option>
-                            </select>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5" title="我方或 Client 單號皆可查">Tx ID（我方／Client 皆可查）</label>
+                            <input type="text" id="report-txid" placeholder="Search by either Tx ID..." class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
                         </div>
                         <div class="flex gap-2">
                             <button onclick="handleReportSearch()" class="bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
@@ -1222,7 +1227,8 @@
                                 <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
                                     <tr>
                                         <th class="p-3">Date/Time</th>
-                                        <th class="p-3">Tx ID</th>
+                                        <th class="p-3 text-blue-800 bg-blue-50/50">Our Tx ID</th>
+                                        <th class="p-3 text-teal-800 bg-teal-50/50">Client Tx ID</th>
                                         <th class="p-3">Site</th>
                                         <th class="p-3 text-center">Method</th>
                                         <th class="p-3">Merchant ID</th>
@@ -1233,8 +1239,8 @@
                                         <th class="p-3 text-center">Currency</th>
                                         <th class="p-3 text-right">Fee (Est.)</th>
                                         <th class="p-3 text-center">Status</th>
-                                        <th class="p-3 text-center">B2C Status</th>
-                                        <th class="p-3 text-center">Action</th>
+                                        <th class="p-3 text-center">Client Status</th>
+                                        <th class="p-3 text-left">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100" id="report-table-body">
@@ -1254,6 +1260,127 @@
 
                 </div>
 
+                <!-- ================= TAB 5b: 對帳報表 (wf-reconcile / Reconciliation Report) ================= -->
+                <!-- 從 Merchant Operator 拆出來的獨立唯讀報表，專供跟 client 端、三方端對帳使用；不含人工核准/拒絕/重送等操作，也不限最近 14 天 -->
+                <div id="wf-reconcile" class="tab-content space-y-6">
+
+                    <div class="bg-blue-50 border border-blue-200 text-blue-800 text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-2">
+                        <i class="fa-solid fa-scale-balanced"></i> 唯讀彙總報表：畫面上只顯示依 Group By 彙總後的統計數字，不會列出逐筆交易明細（資料量大時逐筆呈現不可行）；僅能查詢最近 1 年內的資料；需要逐筆資料請用 Export CSV
+                    </div>
+
+                    <!-- 篩選控制卡片 -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-end gap-4 flex-wrap">
+                        <div class="w-40">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Start Date (From)</label>
+                            <input type="date" id="reconcile-start-date" onchange="handleReconcileDateRangeChange('start')" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                        </div>
+                        <div class="w-40">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">End Date (To)</label>
+                            <input type="date" id="reconcile-end-date" onchange="handleReconcileDateRangeChange('end')" class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                        </div>
+                        <div class="w-44">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Merchant ID</label>
+                            <select id="reconcile-merchant-id" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">All Merchants</option>
+                                <option value="SYS_MER_001">SYS_MER_001 (KPay)</option>
+                                <option value="SYS_MER_002">SYS_MER_002 (PayHelper)</option>
+                                <option value="SYS_MER_003">SYS_MER_003 (Help2Pay)</option>
+                                <option value="SYS_MER_004">SYS_MER_004 (AsiaTrust)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5" title="可複選，勾選多個站點時符合任一即列入">Site</label>
+                            <div class="flex items-center gap-3 border border-slate-300 rounded-lg px-3 h-[38px] bg-white">
+                                <label class="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer">
+                                    <input type="checkbox" id="reconcile-site-12bet" class="rounded text-brand-600 focus:ring-0"> 12bet
+                                </label>
+                                <label class="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer">
+                                    <input type="checkbox" id="reconcile-site-nova" class="rounded text-brand-600 focus:ring-0"> Nova
+                                </label>
+                                <label class="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer">
+                                    <input type="checkbox" id="reconcile-site-bwing" class="rounded text-brand-600 focus:ring-0"> Bwing
+                                </label>
+                            </div>
+                        </div>
+                        <div class="w-40">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Gateway</label>
+                            <select id="reconcile-gateway" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">All Gateways</option>
+                                <option value="KPay">KPay</option>
+                                <option value="PayHelper">PayHelper</option>
+                                <option value="Help2Pay">Help2Pay</option>
+                                <option value="AsiaTrust">AsiaTrust</option>
+                            </select>
+                        </div>
+                        <div class="w-32">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Currency</label>
+                            <select id="reconcile-currency" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">All</option>
+                                <option value="THB">THB</option>
+                                <option value="MYR">MYR</option>
+                                <option value="IDR">IDR</option>
+                                <option value="USD">USD</option>
+                                <option value="INR">INR</option>
+                            </select>
+                        </div>
+                        <div class="w-36">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Status</label>
+                            <select id="reconcile-status" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="All">All Statuses</option>
+                                <option value="SUCCESS">SUCCESS</option>
+                                <option value="FAILED">FAILED</option>
+                                <option value="PENDING">PENDING</option>
+                                <option value="REJECTED">REJECTED</option>
+                            </select>
+                        </div>
+                        <div class="w-48">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Tx ID（我方／三方皆可查）</label>
+                            <input type="text" id="reconcile-txid" placeholder="Search by either Tx ID..." class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
+                        </div>
+                        <div class="w-40">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5" title="畫面固定為彙總呈現，此欄位決定要依哪個維度彙總">Group By（必選）</label>
+                            <select id="reconcile-groupby" onchange="handleReconcileSearch()" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
+                                <option value="Site" selected>Site</option>
+                                <option value="Merchant">Merchant ID</option>
+                                <option value="Currency">Currency</option>
+                                <option value="Gateway">Gateway</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="handleReconcileSearch()" class="bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
+                                <i class="fa-solid fa-magnifying-glass"></i> Search
+                            </button>
+                            <button onclick="exportReconcileToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-csv"></i> Export CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 彙總統計表格：一律以「Group By 維度 + 幣別」彙總呈現，不列出逐筆交易 -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm whitespace-nowrap">
+                                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
+                                    <tr>
+                                        <th class="p-3" id="reconcile-group-col-header">Site</th>
+                                        <th class="p-3 text-center">Currency</th>
+                                        <th class="p-3 text-right">Txn Count</th>
+                                        <th class="p-3 text-right">Total Amount</th>
+                                        <th class="p-3 text-right">Total Fee (Est.)</th>
+                                        <th class="p-3 text-center">Exceptions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100" id="reconcile-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="bg-slate-50 border-t border-slate-200 p-4 text-xs text-slate-500">
+                            共 <span id="reconcile-total-count" class="font-bold text-slate-700">0</span> 筆交易，彙總為 <span id="reconcile-group-count" class="font-bold text-slate-700">0</span> 組
+                        </div>
+                    </div>
+
+                </div>
+
                 <!-- ================= 既有 Finance > Setting 選單佔位頁 (wf-placeholder) ================= -->
                 <div id="wf-placeholder" class="tab-content space-y-6">
                     <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-10 flex flex-col items-center text-center gap-3">
@@ -1264,16 +1391,8 @@
                 </div>
 
                 <!-- ================= Payment Gateway (wf-pay-gateway) — ported from adminsite src/features/paymentManagement ================= -->
-                <div id="wf-pay-gateway" class="tab-content space-y-6 relative">
-                    <!-- 遮罩：Payment Gateway 功能已整合進 Merchant Channel Setting，這裡先保留畫面但不建議繼續操作 -->
-                    <div class="absolute inset-0 z-10 bg-white/85 backdrop-blur-[1px] flex flex-col items-center justify-center gap-4 rounded-xl">
-                        <i class="fa-solid fa-arrow-right-arrow-left text-3xl text-slate-400"></i>
-                        <div class="text-slate-700 font-bold text-base">此頁面功能已整合進 Merchant Channel Setting</div>
-                        <div class="text-slate-400 text-sm">請改用 Merchant Channel Setting 進行渠道設定與操作</div>
-                        <button onclick="switchTab('wf-channel')" class="bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
-                            <i class="fa-solid fa-arrow-right"></i> 前往 Merchant Channel Setting
-                        </button>
-                    </div>
+                <!-- Client 端既有渠道設定畫面：由 Payment Hub（Merchant Channel Setting）決定要把商戶底下哪些渠道派送過來，兩者並非互相取代的關係 -->
+                <div id="wf-pay-gateway" class="tab-content space-y-6">
                     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-end gap-4 flex-wrap">
                         <div class="w-32">
                             <label class="block text-xs font-bold text-slate-500 mb-1.5">Currency</label>
@@ -1668,6 +1787,26 @@
             return prefix + numericPart;
         }
 
+        // 三方端自己認的交易編號（對帳用）：demo 情境下用 Gateway 前綴 + 時間戳模擬，實際串接時應改讀三方 callback 回傳的原始單號
+        function getThirdPartyTransId(item) {
+            const prefixMap = { KPay: 'KP', PayHelper: 'PH', Help2Pay: 'H2P', AsiaTrust: 'AT' };
+            const prefix = prefixMap[item.gateway] || 'TP';
+            return prefix + '-' + item.date.replace(/[^0-9]/g, '');
+        }
+
+        // Client（站台）自己認的訂單編號：demo 情境下用站台代碼 + 時間戳模擬，實際串接時應改讀 Client 端下單/callback 帶來的原始單號
+        function getClientTransId(item) {
+            const prefixMap = { '12bet': 'BET12', 'Nova': 'NOVA', 'Bwing': 'BWNG' };
+            const prefix = prefixMap[item.site] || 'CLI';
+            return prefix + '-' + item.date.replace(/[^0-9]/g, '');
+        }
+
+        // 結算日：僅實際入帳成功（非 Pending / 非 Rejected）的交易才有結算日，demo 以 T+1 模擬
+        function getSettleDate(item) {
+            const isSettled = !item.isRejected && item.status !== 'Pending' && item.successCount > 0;
+            return isSettled ? reportAddDays(item.date.split(' ')[0], 1) : '-';
+        }
+
         // 系統訊息通知氣泡提示
         function alertSimulator(msg, isError) {
             const notify = document.createElement('div');
@@ -1680,6 +1819,38 @@
                 notify.classList.add('opacity-0', 'translate-y-2');
                 setTimeout(() => notify.remove(), 300);
             }, 3000);
+        }
+
+        // 某商戶底下掛了幾個 channel
+        function getMerchantChannelCount(sysId) {
+            return channelData.filter(c => c.sysMerchant === sysId).length;
+        }
+
+        // 商戶 → 渠道 站點指派向下繼承：channel.defaultSites 一律由所屬商戶的 sites 推導，不再獨立設定
+        function syncChannelSitesFromMerchant() {
+            channelData.forEach(c => {
+                const m = merchantData.find(x => x.sysId === c.sysMerchant);
+                c.defaultSites = (m && Array.isArray(m.sites)) ? [...m.sites] : [];
+            });
+        }
+
+        // 該渠道在這個站點是否仍然有效（其所屬商戶目前是否還有指派這個站點）
+        // 商戶站點指派「只」決定渠道在站點層的可用性，不會去改動 Site 底下的群組設定；
+        // 失效的指派保留原樣、僅在 UI 標示並於路由時跳過，交由營運自行決定要不要移除。
+        function isChannelActiveOnSite(chan, site) {
+            return !!chan && Array.isArray(chan.defaultSites) && chan.defaultSites.includes(site);
+        }
+
+        // 統計目前有幾筆群組指派因為商戶取消站點而失效（僅供提示，不做任何刪除）
+        function countStaleGroupAssignments() {
+            let stale = 0;
+            ruleGroups.forEach(rg => {
+                rg.assignedChannels.forEach(ac => {
+                    const chan = channelData.find(c => c.id === ac.channelId);
+                    if (!isChannelActiveOnSite(chan, rg.site)) stale++;
+                });
+            });
+            return stale;
         }
 
         // 雙向同步渠道對應之群組 metadata
@@ -1699,33 +1870,35 @@
 
         // === 2. 系統模擬資料池 (商戶、渠道與智慧策略群組) ===
 
+        // sites：商戶指派的適用站點。商戶底下所有 channel 的適用站點一律由此繼承（Merchant Channel Setting 不可單獨設定）
         let merchantData = [
-            { sysId: 'SYS_MER_001', gateway: 'KPay', currency: 'MYR', balance: 1704420, loginUser: 'finance_kpay_01', loginPass: 'Kp#Pass8812', loginUrl: 'https://merchant.kpay.example.com/login', status: 'Enable' },
-            { sysId: 'SYS_MER_002', gateway: 'PayHelper', currency: 'THB', balance: 112000, loginUser: 'finance_payhelper_normal', loginPass: 'PhNormal@332', loginUrl: 'https://merchant.payhelper.example.com/login', status: 'Enable' },
-            { sysId: 'SYS_MER_003', gateway: 'Help2Pay', currency: 'IDR', balance: 4414000, loginUser: 'h2p_fin_settle', loginPass: 'H2pSettle_90', loginUrl: 'https://merchant.help2pay.example.com/login', status: 'Enable' },
-            { sysId: 'SYS_MER_004', gateway: 'AsiaTrust', currency: 'USD', balance: 42000, loginUser: 'asiatrust_memo', loginPass: 'AT_memo_pass', loginUrl: 'https://merchant.asiatrust.example.com/login', status: 'Disable' }
+            { sysId: 'SYS_MER_001', gateway: 'KPay', currency: 'MYR', balance: 1704420, loginUser: 'finance_kpay_01', loginPass: 'Kp#Pass8812', loginUrl: 'https://merchant.kpay.example.com/login', status: 'Enable', sites: ['12bet', 'Nova', 'Bwing'] },
+            { sysId: 'SYS_MER_002', gateway: 'PayHelper', currency: 'THB', balance: 112000, loginUser: 'finance_payhelper_normal', loginPass: 'PhNormal@332', loginUrl: 'https://merchant.payhelper.example.com/login', status: 'Enable', sites: ['12bet', 'Nova', 'Bwing'] },
+            { sysId: 'SYS_MER_003', gateway: 'Help2Pay', currency: 'IDR', balance: 4414000, loginUser: 'h2p_fin_settle', loginPass: 'H2pSettle_90', loginUrl: 'https://merchant.help2pay.example.com/login', status: 'Enable', sites: ['12bet', 'Nova', 'Bwing'] },
+            { sysId: 'SYS_MER_004', gateway: 'AsiaTrust', currency: 'USD', balance: 42000, loginUser: 'asiatrust_memo', loginPass: 'AT_memo_pass', loginUrl: 'https://merchant.asiatrust.example.com/login', status: 'Disable', sites: ['12bet', 'Bwing'] }
         ];
 
-        // matchPriority：Match Setting 配對順序 fallback 用（同 Gateway/Merchant/Type/Currency 組合時，數字越小越優先）
+        // 註：channel 不再有 defaultSites / matchPriority 欄位。
+        //     defaultSites 改由 syncChannelSitesFromMerchant() 依所屬商戶的 sites 動態推導（唯讀衍生值）。
         let channelData = [
-            { id: 1, method: 'Deposit', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', channel: 'Online Banking', type: 'OnlineBanking', currency: 'MYR', min: 10, max: 5000, chargeFee: 1.20, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'], matchPriority: 1 },
-            { id: 2, method: 'Deposit', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', channel: 'Online Banking', type: 'OnlineBanking', currency: 'THB', min: 50, max: 20000, chargeFee: 1.50, perCount: 1.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'], matchPriority: 1 },
-            { id: 3, method: 'Deposit', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', channel: 'Virtual Account', type: 'OnlineBanking', currency: 'IDR', min: 20000, max: 500000, chargeFee: 1.10, perCount: 0.00, status: true, defaultSites: ['12bet', 'Bwing'], matchPriority: 1 },
-            { id: 4, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', channel: 'PhonePe', type: 'EWallet', currency: 'INR', min: 100, max: 50000, chargeFee: 2.00, perCount: 5.00, status: true, defaultSites: ['Nova'], matchPriority: 1 },
-            { id: 5, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', channel: 'GoPay', type: 'EWallet', currency: 'IDR', min: 50000, max: 1000000, chargeFee: 1.80, perCount: 10.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'], matchPriority: 1 },
-            { id: 6, method: 'Deposit', gateway: 'PayHelper', sysMerchant: 'SYS_MER_002', channel: 'TopupCard', type: 'TopupCard', currency: 'THB', min: 100, max: 5000, chargeFee: 3.50, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'], matchPriority: 1 },
-            { id: 7, method: 'Withdrawal', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', channel: 'BankTransfer', type: 'CardTransfer', currency: 'MYR', min: 100, max: 100000, chargeFee: 0.00, perCount: 15.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'], matchPriority: 1 },
-            { id: 8, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', channel: 'PromptPay', type: 'EWallet', currency: 'THB', min: 20, max: 15000, chargeFee: 1.10, perCount: 0.50, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'], matchPriority: 1 },
-            { id: 9, method: 'Deposit', gateway: 'PayHelper', sysMerchant: 'SYS_MER_002', channel: 'TrueMoney', type: 'EWallet', currency: 'THB', min: 50, max: 8000, chargeFee: 1.30, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'], matchPriority: 1 },
-            { id: 10, method: 'Deposit', gateway: 'AsiaTrust', sysMerchant: 'SYS_MER_004', channel: 'Online Banking', type: 'OnlineBanking', currency: 'THB', min: 500, max: 100000, chargeFee: 0.90, perCount: 2.00, status: true, defaultSites: ['12bet', 'Bwing'], matchPriority: 1 },
-            { id: 11, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', channel: 'TrueMoney', type: 'EWallet', currency: 'THB', min: 30, max: 10000, chargeFee: 1.25, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'], matchPriority: 2 },
-            { id: 12, method: 'Withdrawal', gateway: 'KPay', sysMerchant: 'SYS_MER_001', channel: 'TrueMoney', type: 'EWallet', currency: 'THB', min: 50, max: 20000, chargeFee: 0.00, perCount: 10.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'], matchPriority: 1 },
-            { id: 13, method: 'Withdrawal', gateway: 'PayHelper', sysMerchant: 'SYS_MER_002', channel: 'BankTransfer', type: 'CardTransfer', currency: 'THB', min: 100, max: 50000, chargeFee: 0.00, perCount: 20.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'], matchPriority: 1 },
-            { id: 14, method: 'Withdrawal', gateway: 'AsiaTrust', sysMerchant: 'SYS_MER_004', channel: 'BankTransfer', type: 'OnlineBanking', currency: 'USD', min: 50, max: 20000, chargeFee: 0.00, perCount: 5.00, status: false, defaultSites: ['12bet', 'Bwing'], matchPriority: 1 },
-            { id: 15, method: 'Withdrawal', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', channel: 'BankTransfer', type: 'CardTransfer', currency: 'IDR', min: 100000, max: 20000000, chargeFee: 0.00, perCount: 25000.00, status: true, defaultSites: ['12bet', 'Bwing'], matchPriority: 1 },
-            { id: 16, method: 'Withdrawal', gateway: 'KPay', sysMerchant: 'SYS_MER_001', channel: 'GoPay', type: 'EWallet', currency: 'IDR', min: 50000, max: 5000000, chargeFee: 0.00, perCount: 15000.00, status: true, defaultSites: ['Nova'], matchPriority: 2 },
-            { id: 17, method: 'Deposit', gateway: 'AsiaTrust', sysMerchant: 'SYS_MER_004', channel: 'USDT', type: 'Crypto', currency: 'USD', min: 10, max: 50000, chargeFee: 0.50, perCount: 0.00, status: true, defaultSites: ['12bet', 'Nova', 'Bwing'], matchPriority: 1 },
-            { id: 18, method: 'Withdrawal', gateway: 'AsiaTrust', sysMerchant: 'SYS_MER_004', channel: 'BNB', type: 'Crypto', currency: 'USD', min: 10, max: 50000, chargeFee: 0.50, perCount: 0.00, status: true, defaultSites: ['12bet', 'Bwing'], matchPriority: 2 }
+            { id: 1, method: 'Deposit', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', channel: 'Online Banking', type: 'OnlineBanking', currency: 'MYR', min: 10, max: 5000, chargeFee: 1.20, perCount: 0.00, status: true },
+            { id: 2, method: 'Deposit', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', channel: 'Online Banking', type: 'OnlineBanking', currency: 'THB', min: 50, max: 20000, chargeFee: 1.50, perCount: 1.00, status: true },
+            { id: 3, method: 'Deposit', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', channel: 'Virtual Account', type: 'OnlineBanking', currency: 'IDR', min: 20000, max: 500000, chargeFee: 1.10, perCount: 0.00, status: true },
+            { id: 4, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', channel: 'PhonePe', type: 'EWallet', currency: 'INR', min: 100, max: 50000, chargeFee: 2.00, perCount: 5.00, status: true },
+            { id: 5, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', channel: 'GoPay', type: 'EWallet', currency: 'IDR', min: 50000, max: 1000000, chargeFee: 1.80, perCount: 10.00, status: true },
+            { id: 6, method: 'Deposit', gateway: 'PayHelper', sysMerchant: 'SYS_MER_002', channel: 'TopupCard', type: 'TopupCard', currency: 'THB', min: 100, max: 5000, chargeFee: 3.50, perCount: 0.00, status: true },
+            { id: 7, method: 'Withdrawal', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', channel: 'BankTransfer', type: 'CardTransfer', currency: 'MYR', min: 100, max: 100000, chargeFee: 0.00, perCount: 15.00, status: true },
+            { id: 8, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', channel: 'PromptPay', type: 'EWallet', currency: 'THB', min: 20, max: 15000, chargeFee: 1.10, perCount: 0.50, status: true },
+            { id: 9, method: 'Deposit', gateway: 'PayHelper', sysMerchant: 'SYS_MER_002', channel: 'TrueMoney', type: 'EWallet', currency: 'THB', min: 50, max: 8000, chargeFee: 1.30, perCount: 0.00, status: true },
+            { id: 10, method: 'Deposit', gateway: 'AsiaTrust', sysMerchant: 'SYS_MER_004', channel: 'Online Banking', type: 'OnlineBanking', currency: 'THB', min: 500, max: 100000, chargeFee: 0.90, perCount: 2.00, status: true },
+            { id: 11, method: 'Deposit', gateway: 'KPay', sysMerchant: 'SYS_MER_001', channel: 'TrueMoney', type: 'EWallet', currency: 'THB', min: 30, max: 10000, chargeFee: 1.25, perCount: 0.00, status: true },
+            { id: 12, method: 'Withdrawal', gateway: 'KPay', sysMerchant: 'SYS_MER_001', channel: 'TrueMoney', type: 'EWallet', currency: 'THB', min: 50, max: 20000, chargeFee: 0.00, perCount: 10.00, status: true },
+            { id: 13, method: 'Withdrawal', gateway: 'PayHelper', sysMerchant: 'SYS_MER_002', channel: 'BankTransfer', type: 'CardTransfer', currency: 'THB', min: 100, max: 50000, chargeFee: 0.00, perCount: 20.00, status: true },
+            { id: 14, method: 'Withdrawal', gateway: 'AsiaTrust', sysMerchant: 'SYS_MER_004', channel: 'BankTransfer', type: 'OnlineBanking', currency: 'USD', min: 50, max: 20000, chargeFee: 0.00, perCount: 5.00, status: false },
+            { id: 15, method: 'Withdrawal', gateway: 'Help2Pay', sysMerchant: 'SYS_MER_003', channel: 'BankTransfer', type: 'CardTransfer', currency: 'IDR', min: 100000, max: 20000000, chargeFee: 0.00, perCount: 25000.00, status: true },
+            { id: 16, method: 'Withdrawal', gateway: 'KPay', sysMerchant: 'SYS_MER_001', channel: 'GoPay', type: 'EWallet', currency: 'IDR', min: 50000, max: 5000000, chargeFee: 0.00, perCount: 15000.00, status: true },
+            { id: 17, method: 'Deposit', gateway: 'AsiaTrust', sysMerchant: 'SYS_MER_004', channel: 'USDT', type: 'Crypto', currency: 'USD', min: 10, max: 50000, chargeFee: 0.50, perCount: 0.00, status: true },
+            { id: 18, method: 'Withdrawal', gateway: 'AsiaTrust', sysMerchant: 'SYS_MER_004', channel: 'BNB', type: 'Crypto', currency: 'USD', min: 10, max: 50000, chargeFee: 0.50, perCount: 0.00, status: true }
         ];
 
         let ruleGroups = [
@@ -1765,22 +1938,126 @@
         // notifyStatus 追蹤 Hub → B2C 平台的通知送達狀態，與交易本身的成敗結果是兩個獨立維度
         // Delivered：B2C 已確認收到 / Failed：送過但失敗（需重送）/ NotSent：Hub 尚未嘗試送出（通知為同步 callback，僅有成功/失敗兩種結果，無 Pending 中間態）
         let merchantReportData = [
-            { date: '2026-06-28 10:30:22', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', channel: 'Online Banking', currency: 'THB', successAmount: 3500, fee: 52.5, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', Method: 'Deposit', notifyStatus: 'Delivered' },
-            { date: '2026-06-28 09:12:44', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', channel: 'TrueMoney', currency: 'MYR', successAmount: 450, fee: 9.0, successCount: 1, failedCount: 0, status: 'Pending', site: '12bet', groupName: '大額深夜防刷組', Method: 'Deposit', notifyStatus: 'NotSent' },
-            { date: '2026-06-28 02:45:18', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'EWallet', channel: 'TrueMoney', currency: 'THB', successAmount: 0, fee: 0, successCount: 0, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', isRejected: true, Method: 'Deposit', notifyStatus: 'Failed' },
+            { date: '2026-06-28 10:30:22', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', channel: 'Online Banking', currency: 'THB', successAmount: 3500, fee: 52.5, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', Method: 'Deposit', notifyStatus: 'Delivered', actionLog: [ { action: 'Approve', operator: 'finance_manager_01', time: '2026-06-28 10:32:05' } ] },
+            { date: '2026-06-28 09:12:44', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', channel: 'TrueMoney', currency: 'MYR', successAmount: 450, fee: 9.0, successCount: 1, failedCount: 0, status: 'Pending', site: '12bet', groupName: '大額深夜防刷組', Method: 'Deposit', notifyStatus: 'NotSent', actionLog: [ { action: 'Resend (Failed)', operator: 'finance_manager_01', time: '2026-06-28 09:20:11' } ] },
+            { date: '2026-06-28 02:45:18', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'EWallet', channel: 'TrueMoney', currency: 'THB', successAmount: 0, fee: 0, successCount: 0, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', isRejected: true, Method: 'Deposit', notifyStatus: 'Failed', actionLog: [ { action: 'Reject', operator: 'risk_officer_03', time: '2026-06-28 03:10:45' }, { action: 'Resend (Failed)', operator: 'ops_supervisor_02', time: '2026-06-28 03:15:02' } ] },
             { date: '2026-06-27 23:55:12', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', channel: 'PromptPay', currency: 'THB', successAmount: 1500, fee: 16.5, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: '新玩家群', Method: 'Deposit', notifyStatus: 'Failed' },
             { date: '2026-06-27 21:14:05', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', channel: 'Online Banking', currency: 'IDR', successAmount: 15000000, fee: 165000, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', Method: 'Deposit', notifyStatus: 'Delivered' },
             { date: '2026-06-27 18:44:30', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'TopupCard', channel: 'TopupCard', currency: 'THB', successAmount: 500, fee: 17.5, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', Method: 'Deposit', notifyStatus: 'Delivered' },
             { date: '2026-06-27 15:30:22', sysId: 'SYS_MER_004', gateway: 'AsiaTrust', type: 'OnlineBanking', channel: 'FastBank', currency: 'USD', successAmount: 2500, fee: 22.5, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: 'Master Pool', Method: 'Deposit', notifyStatus: 'Delivered' },
             { date: '2026-06-27 11:22:10', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', channel: 'TrueMoney', currency: 'MYR', successAmount: 900, fee: 18.0, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: 'Master Pool', Method: 'Deposit', notifyStatus: 'NotSent' },
             { date: '2026-06-27 09:05:14', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', channel: 'GoPay', currency: 'IDR', successAmount: 800000, fee: 14400, successCount: 1, failedCount: 0, status: 'Completed', site: 'Bwing', groupName: 'Master Pool', Method: 'Deposit', notifyStatus: 'Delivered' },
-            { date: '2026-06-27 01:20:30', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', channel: 'Online Banking', currency: 'THB', successAmount: 0, fee: 0, successCount: 0, failedCount: 0, status: 'Completed', site: '12bet', groupName: '大額深夜防刷組', isRejected: true, Method: 'Deposit', notifyStatus: 'NotSent' },
+            { date: '2026-06-27 01:20:30', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', channel: 'Online Banking', currency: 'THB', successAmount: 0, fee: 0, successCount: 0, failedCount: 0, status: 'Completed', site: '12bet', groupName: '大額深夜防刷組', isRejected: true, Method: 'Deposit', notifyStatus: 'NotSent', actionLog: [ { action: 'Reject', operator: 'risk_officer_03', time: '2026-06-27 01:45:10' } ] },
             { date: '2026-06-26 23:14:02', sysId: 'SYS_MER_002', gateway: 'PayHelper', type: 'TopupCard', channel: 'TopupCard', currency: 'THB', successAmount: 1000, fee: 35.0, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '海外高風險IP組', Method: 'Deposit', notifyStatus: 'Delivered' },
             { date: '2026-06-26 21:04:18', sysId: 'SYS_MER_004', gateway: 'AsiaTrust', type: 'OnlineBanking', channel: 'FastBank', currency: 'USD', successAmount: 12000, fee: 108, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: 'Master Pool', Method: 'Deposit', notifyStatus: 'Delivered' },
             { date: '2026-06-26 19:45:30', sysId: 'SYS_MER_001', gateway: 'KPay', type: 'EWallet', channel: 'TrueMoney', currency: 'MYR', successAmount: 3200, fee: 15, successCount: 1, failedCount: 0, status: 'Completed', site: 'Nova', groupName: 'Withdrawal安全組', Method: 'Withdrawal', notifyStatus: 'Delivered' },
             { date: '2026-06-26 16:30:12', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'CardTransfer', channel: 'BankTransfer', currency: 'MYR', successAmount: 8500, fee: 15, successCount: 0, failedCount: 0, status: 'Pending', site: 'Nova', groupName: 'Withdrawal安全組', Method: 'Withdrawal', notifyStatus: 'NotSent' },
             { date: '2026-06-26 14:12:05', sysId: 'SYS_MER_003', gateway: 'Help2Pay', type: 'OnlineBanking', channel: 'Online Banking', currency: 'IDR', successAmount: 45000000, fee: 495000, successCount: 1, failedCount: 0, status: 'Completed', site: '12bet', groupName: '印尼盾高頻老客組', Method: 'Deposit', notifyStatus: 'Delivered' }
         ];
+
+        // Merchant Operator 僅能查詢最近 3 個月資料，Reconciliation Report 僅能查詢最近 1 年資料
+        // 以資料集最新交易日期模擬「今日」基準，避免示範資料落在窗口外導致查無資料
+        const REPORT_WINDOW_MONTHS = 3;
+        const RECONCILE_WINDOW_MONTHS = 12;
+        const REPORT_REFERENCE_TODAY = '2026-06-28';
+
+        // 一律以 UTC 解析/序列化日期字串，避免瀏覽器所在時區造成的跨日誤差
+        function reportAddDays(dateStr, days) {
+            const d = new Date(dateStr + 'T00:00:00Z');
+            d.setUTCDate(d.getUTCDate() + days);
+            return d.toISOString().slice(0, 10);
+        }
+
+        function reportSubtractMonths(dateStr, months) {
+            const d = new Date(dateStr + 'T00:00:00Z');
+            d.setUTCMonth(d.getUTCMonth() - months);
+            return d.toISOString().slice(0, 10);
+        }
+
+        function reportDaySpan(startStr, endStr) {
+            return (new Date(endStr + 'T00:00:00Z') - new Date(startStr + 'T00:00:00Z')) / 86400000;
+        }
+
+        // 通用日期區間夾取：把 start/end 限制在 [min, max] 內，且跨距不超過該窗口本身的天數
+        function clampDateRangeToWindow(startInput, endInput, min, max, changed) {
+            if (!startInput || !endInput) return;
+
+            let start = startInput.value;
+            let end = endInput.value;
+
+            if (start && start < min) start = min;
+            if (start && start > max) start = max;
+            if (end && end < min) end = min;
+            if (end && end > max) end = max;
+
+            if (start && end) {
+                if (end < start) {
+                    if (changed === 'end') start = end; else end = start;
+                }
+                const windowDays = reportDaySpan(min, max);
+                const spanDays = reportDaySpan(start, end);
+                if (spanDays > windowDays) {
+                    if (changed === 'start') {
+                        const capped = reportAddDays(start, windowDays);
+                        end = capped > max ? max : capped;
+                    } else {
+                        const capped = reportAddDays(end, -windowDays);
+                        start = capped < min ? min : capped;
+                    }
+                }
+            }
+
+            startInput.value = start;
+            endInput.value = end;
+        }
+
+        function getReportDateBounds() {
+            const max = REPORT_REFERENCE_TODAY;
+            return { min: reportSubtractMonths(max, REPORT_WINDOW_MONTHS), max };
+        }
+
+        function applyReportDateBounds() {
+            const { min, max } = getReportDateBounds();
+            const startInput = document.getElementById('report-start-date');
+            const endInput = document.getElementById('report-end-date');
+            if (startInput) { startInput.min = min; startInput.max = max; }
+            if (endInput) { endInput.min = min; endInput.max = max; }
+        }
+
+        // 確保 Start/End Date 落在最近 3 個月內，且區間跨距不超過 3 個月
+        function clampReportDateRange(changed) {
+            const { min, max } = getReportDateBounds();
+            clampDateRangeToWindow(document.getElementById('report-start-date'), document.getElementById('report-end-date'), min, max, changed);
+        }
+
+        function handleReportDateRangeChange(changed) {
+            clampReportDateRange(changed);
+            handleReportSearch();
+        }
+
+        function getReconcileDateBounds() {
+            const max = REPORT_REFERENCE_TODAY;
+            return { min: reportSubtractMonths(max, RECONCILE_WINDOW_MONTHS), max };
+        }
+
+        function applyReconcileDateBounds() {
+            const { min, max } = getReconcileDateBounds();
+            const startInput = document.getElementById('reconcile-start-date');
+            const endInput = document.getElementById('reconcile-end-date');
+            if (startInput) { startInput.min = min; startInput.max = max; }
+            if (endInput) { endInput.min = min; endInput.max = max; }
+        }
+
+        // 確保 Start/End Date 落在最近 1 年內，且區間跨距不超過 1 年
+        function clampReconcileDateRange(changed) {
+            const { min, max } = getReconcileDateBounds();
+            clampDateRangeToWindow(document.getElementById('reconcile-start-date'), document.getElementById('reconcile-end-date'), min, max, changed);
+        }
+
+        function handleReconcileDateRangeChange(changed) {
+            clampReconcileDateRange(changed);
+            handleReconcileSearch();
+        }
 
         // === 3. Tab 切換與側邊欄 ===
 
@@ -1800,9 +2077,10 @@
             }
 
             const titles = {
-                'wf-merchant': 'Payment Merchant Management',
+                'wf-merchant': 'Merchant Management',
                 'wf-channel': 'Merchant Channel Setting',
-                'wf-report': 'Merchant Report',
+                'wf-report': 'Merchant Operator',
+                'wf-reconcile': 'Reconciliation Report',
                 'wf-override': '智慧分群與渠道對應',
                 'wf-sandbox': 'B2C 貼標與沙盒模擬',
                 'wf-pay-gateway': 'Payment Gateway',
@@ -1824,11 +2102,21 @@
                 }
                 loadB2CMemberTraits();
             } else if (tabId === 'wf-report') {
+                applyReportDateBounds();
                 if (!document.getElementById('report-start-date').value) {
-                    document.getElementById('report-start-date').value = '2026-06-01';
-                    document.getElementById('report-end-date').value = '2026-06-30';
+                    const { min, max } = getReportDateBounds();
+                    document.getElementById('report-start-date').value = min;
+                    document.getElementById('report-end-date').value = max;
                 }
                 handleReportSearch();
+            } else if (tabId === 'wf-reconcile') {
+                applyReconcileDateBounds();
+                if (!document.getElementById('reconcile-start-date').value) {
+                    const { min, max } = getReconcileDateBounds();
+                    document.getElementById('reconcile-start-date').value = min;
+                    document.getElementById('reconcile-end-date').value = max;
+                }
+                handleReconcileSearch();
             } else if (tabId === 'wf-pay-gateway') {
                 handlePgSearch();
             } else if (tabId === 'wf-pay-shift') {
@@ -1903,6 +2191,10 @@
                 const statusBadge = m.status === 'Enable'
                     ? `<span class="bg-emerald-100 text-emerald-800 font-bold text-[10px] px-2.5 py-1 rounded-full"><i class="fa-solid fa-circle-check"></i> 啟用上線</span>`
                     : `<span class="bg-slate-200 text-slate-600 font-bold text-[10px] px-2.5 py-1 rounded-full"><i class="fa-solid fa-circle-minus"></i> 暫停停用</span>`;
+                const chanCount = getMerchantChannelCount(m.sysId);
+                const siteBadges = (m.sites && m.sites.length > 0)
+                    ? m.sites.map(site => `<span class="bg-brand-100 text-brand-700 text-[10px] px-1.5 py-0.5 rounded font-bold mr-1">${site}</span>`).join('')
+                    : `<span class="text-rose-500 text-[10px] font-bold italic">未指派站點</span><div class="text-[10px] text-slate-400 mt-1">${chanCount} 個渠道皆不開放</div>`;
 
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 transition-colors text-sm';
@@ -1910,7 +2202,7 @@
                     <td class="p-4 font-mono font-bold text-brand-700">${m.sysId}</td>
                     <td class="p-4 font-semibold text-slate-700">${m.gateway}</td>
                     <td class="p-4 font-mono text-slate-600">${m.currency}</td>
-                    <td class="p-4 font-mono font-bold text-slate-800">${m.balance.toLocaleString()}</td>
+                    <td class="p-4 bg-brand-50/50">${siteBadges}</td>
                     <td class="p-4 text-center">${statusBadge}</td>
                     <td class="p-4 text-center">
                         <button onclick="openEditMerchantModal('${m.sysId}')" class="text-brand-600 hover:text-brand-800 transition-colors p-1.5 rounded hover:bg-brand-50" title="編輯">
@@ -1950,6 +2242,12 @@
             document.getElementById('modal-login-user').value = m.loginUser;
             document.getElementById('modal-login-pass').value = m.loginPass;
             document.getElementById('modal-login-url').value = m.loginUrl || '';
+
+            const mSites = m.sites || [];
+            document.getElementById('mer-modal-site-12bet').checked = mSites.includes('12bet');
+            document.getElementById('mer-modal-site-nova').checked = mSites.includes('Nova');
+            document.getElementById('mer-modal-site-bwing').checked = mSites.includes('Bwing');
+            updateMerchantSitePreview();
 
             document.getElementById('radio-enable').checked = m.status === 'Enable';
             document.getElementById('radio-disable').checked = m.status === 'Disable';
@@ -1993,6 +2291,25 @@
             window.open(url, '_blank', 'noopener,noreferrer');
         }
 
+        function readMerchantModalSites() {
+            const sites = [];
+            if (document.getElementById('mer-modal-site-12bet').checked) sites.push('12bet');
+            if (document.getElementById('mer-modal-site-nova').checked) sites.push('Nova');
+            if (document.getElementById('mer-modal-site-bwing').checked) sites.push('Bwing');
+            return sites;
+        }
+
+        // 勾選當下就讓操作者看到「這個決定會連動幾個渠道」
+        function updateMerchantSitePreview() {
+            const hint = document.getElementById('mer-modal-site-hint');
+            if (!hint || !currentEditMerchantId) return;
+            const sites = readMerchantModalSites();
+            const n = getMerchantChannelCount(currentEditMerchantId);
+            hint.innerHTML = sites.length === 0
+                ? `⚠️ 未勾選任何站點 — 此商戶底下 <b class="text-rose-600">${n}</b> 個渠道將全部不對任何站點開放。`
+                : `此商戶底下 <b class="text-brand-700">${n}</b> 個渠道會自動同步指派至：<b class="text-brand-700">${sites.join(' / ')}</b>（Merchant Channel Setting 不需再逐筆設定）`;
+        }
+
         function updateModalRadioUI() {
             const enableChecked = document.getElementById('radio-enable').checked;
             const labelEnable = document.getElementById('label-enable');
@@ -2015,10 +2332,19 @@
             m.loginPass = document.getElementById('modal-login-pass').value;
             m.loginUrl = document.getElementById('modal-login-url').value.trim();
             m.status = document.getElementById('radio-enable').checked ? 'Enable' : 'Disable';
+            m.sites = readMerchantModalSites();
+
+            // 商戶站點一改，底下所有 channel 立刻重新繼承（群組設定不動）
+            syncChannelSitesFromMerchant();
+            const stale = countStaleGroupAssignments();
+            syncChannelMappedGroups();
 
             renderMerchantTable(merchantData);
+            renderChannelTable(channelData);
             closeEditModal();
-            alertSimulator(`✅ 商戶 [${m.sysId}] 設定已成功儲存！`);
+            const siteText = m.sites.length > 0 ? m.sites.join(' / ') : '（無站點）';
+            const staleText = stale > 0 ? `；另有 ${stale} 筆群組渠道指派已失效（設定保留未動，請至智慧分群確認）` : '';
+            alertSimulator(`✅ 商戶 [${m.sysId}] 已儲存，底下 ${getMerchantChannelCount(m.sysId)} 個渠道同步指派至 ${siteText}${staleText}`);
         }
 
         // === 5. 網關與渠道 (Tab 2) ===
@@ -2032,7 +2358,7 @@
             if (summary) summary.innerText = `Showing 1 to ${data.length} of ${channelData.length} entries`;
 
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="13" class="p-8 text-center text-slate-400 text-xs italic">查無符合條件之渠道資料</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="12" class="p-8 text-center text-slate-400 text-xs italic">查無符合條件之渠道資料</td></tr>`;
                 return;
             }
 
@@ -2062,7 +2388,6 @@
                     <td class="p-3 text-right font-mono">${c.min.toLocaleString()}</td>
                     <td class="p-3 text-right font-mono">${c.max.toLocaleString()}</td>
                     <td class="p-3 text-right font-mono">${c.perCount.toFixed(2)}</td>
-                    <td class="p-3 text-center font-mono font-bold text-slate-600">${c.matchPriority}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -2084,6 +2409,9 @@
             const type = document.getElementById('filter-chan-type').value;
             const channel = document.getElementById('filter-chan-channel').value;
             const status = document.getElementById('filter-chan-status').value;
+            const selectedSites = ['12bet', 'nova', 'bwing']
+                .filter(s => document.getElementById(`filter-chan-site-${s}`).checked)
+                .map(s => s === '12bet' ? '12bet' : s.charAt(0).toUpperCase() + s.slice(1));
 
             const filtered = channelData.filter(c => {
                 const matchCurrency = currency === 'All' ? true : c.currency === currency;
@@ -2092,7 +2420,8 @@
                 const matchType = type === 'All' ? true : c.type === type;
                 const matchChannel = channel === 'All' ? true : c.channel === channel;
                 const matchStatus = status === 'All' ? true : (status === 'Active' ? c.status === true : c.status === false);
-                return matchCurrency && matchMethod && matchGateway && matchType && matchChannel && matchStatus;
+                const matchSite = selectedSites.length === 0 ? true : (c.defaultSites || []).some(s => selectedSites.includes(s));
+                return matchCurrency && matchMethod && matchGateway && matchType && matchChannel && matchStatus && matchSite;
             });
 
             renderChannelTable(filtered);
@@ -2122,11 +2451,14 @@
             document.getElementById('gw-modal-max').value = c.max;
             document.getElementById('gw-modal-fee').value = c.chargeFee;
             document.getElementById('gw-modal-percount').value = c.perCount;
-            document.getElementById('gw-modal-match-priority').value = c.matchPriority;
 
-            document.getElementById('gw-modal-site-12bet').checked = c.defaultSites.includes('12bet');
-            document.getElementById('gw-modal-site-nova').checked = c.defaultSites.includes('Nova');
-            document.getElementById('gw-modal-site-bwing').checked = c.defaultSites.includes('Bwing');
+            // 適用站點為唯讀衍生值，直接顯示所屬商戶目前的指派結果
+            const ownerMerchant = merchantData.find(x => x.sysId === c.sysMerchant);
+            const inheritedSites = (ownerMerchant && ownerMerchant.sites) ? ownerMerchant.sites : [];
+            document.getElementById('gw-modal-inherited-from').innerText = c.sysMerchant;
+            document.getElementById('gw-modal-inherited-sites').innerHTML = inheritedSites.length > 0
+                ? inheritedSites.map(site => `<span class="bg-brand-100 text-brand-700 text-[11px] px-2 py-0.5 rounded font-bold">${site}</span>`).join('')
+                : `<span class="text-rose-500 text-[11px] font-bold italic">商戶尚未指派任何站點，此渠道不會對外開放</span>`;
 
             const modal = document.getElementById('edit-gateway-modal');
             const container = document.getElementById('gateway-modal-container');
@@ -2153,13 +2485,6 @@
             c.max = Number(document.getElementById('gw-modal-max').value);
             c.chargeFee = Number(document.getElementById('gw-modal-fee').value);
             c.perCount = Number(document.getElementById('gw-modal-percount').value);
-            c.matchPriority = Number(document.getElementById('gw-modal-match-priority').value) || 1;
-
-            const sites = [];
-            if (document.getElementById('gw-modal-site-12bet').checked) sites.push('12bet');
-            if (document.getElementById('gw-modal-site-nova').checked) sites.push('Nova');
-            if (document.getElementById('gw-modal-site-bwing').checked) sites.push('Bwing');
-            c.defaultSites = sites;
 
             syncChannelMappedGroups();
             renderChannelTable(channelData);
@@ -2169,26 +2494,33 @@
 
         // === 6. 商戶明細報表運算與分頁展示邏輯 (Tab 5) ===
 
+        // Site 篩選改為複選 checkbox：不勾任何一個 = 不篩選，勾選多個 = 符合任一站點即列入
+        function getSelectedReportSites() {
+            return ['12bet', 'nova', 'bwing']
+                .filter(s => document.getElementById(`report-site-${s}`).checked)
+                .map(s => s === '12bet' ? '12bet' : s.charAt(0).toUpperCase() + s.slice(1));
+        }
+
         // 明細報表多條件交叉搜尋
         function handleReportSearch() {
+            clampReportDateRange();
             const dateStart = document.getElementById('report-start-date').value;
             const dateEnd = document.getElementById('report-end-date').value;
             const sysId = document.getElementById('report-merchant-id').value;
-            const site = document.getElementById('report-site').value;
+            const selectedSites = getSelectedReportSites();
             const Method = document.getElementById('report-Method').value;
             const gateway = document.getElementById('report-gateway').value;
             const type = document.getElementById('report-type').value;
             const status = document.getElementById('report-status').value;
             const notifyStatus = document.getElementById('report-notify-status').value;
             const txIdInput = document.getElementById('report-txid').value.trim().toLowerCase();
-            const groupInput = document.getElementById('report-group').value.trim().toLowerCase();
 
             const filtered = merchantReportData.filter(item => {
                 const itemDate = item.date.split(' ')[0];
                 const matchStart = dateStart ? itemDate >= dateStart : true;
                 const matchEnd = dateEnd ? itemDate <= dateEnd : true;
                 const matchSysId = sysId === 'All' ? true : item.sysId === sysId;
-                const matchSite = site === 'All' ? true : item.site === site;
+                const matchSite = selectedSites.length === 0 ? true : selectedSites.includes(item.site);
                 const matchMethod = Method === 'All' ? true : item.Method === Method;
                 const matchGateway = gateway === 'All' ? true : item.gateway === gateway;
                 const matchType = type === 'All' ? true : item.type === type;
@@ -2210,10 +2542,10 @@
 
                 // 模糊單號比對
                 const actualTxId = getTransactionId(item).toLowerCase();
-                const matchTxId = txIdInput ? actualTxId.includes(txIdInput) : true;
-                const matchGroup = groupInput ? item.groupName.toLowerCase().includes(groupInput) : true;
+                const clientTxId = getClientTransId(item).toLowerCase();
+                const matchTxId = txIdInput ? (actualTxId.includes(txIdInput) || clientTxId.includes(txIdInput)) : true;
 
-                return matchStart && matchEnd && matchSysId && matchSite && matchMethod && matchGateway && matchType && matchStatus && matchNotifyStatus && matchTxId && matchGroup;
+                return matchStart && matchEnd && matchSysId && matchSite && matchMethod && matchGateway && matchType && matchStatus && matchNotifyStatus && matchTxId;
             });
 
             renderReportView(filtered);
@@ -2382,7 +2714,8 @@
                 tr.className = 'hover:bg-slate-50 transition-colors text-xs font-mono';
                 tr.innerHTML = `
                     <td class="p-3 text-slate-500">${item.date}</td>
-                    <td class="p-3 font-bold text-slate-700">${pseudoTxId}</td>
+                    <td class="p-3 font-bold text-blue-800 bg-blue-50/50">${pseudoTxId}</td>
+                    <td class="p-3 font-bold text-teal-800 bg-teal-50/50">${getClientTransId(item)}</td>
                     <td class="p-3"><span class="bg-slate-100 text-slate-800 text-[10px] px-1.5 py-0.5 rounded font-bold">${item.site}</span></td>
                     <td class="p-3 text-center">${typeBadge}</td>
                     <td class="p-3 font-bold text-slate-800">${item.sysId}</td>
@@ -2394,8 +2727,8 @@
                     <td class="p-3 text-right text-rose-600">$${item.fee.toLocaleString()}</td>
                     <td class="p-3 text-center">${statusBadge}</td>
                     <td class="p-3 text-center">${notifyBadge}</td>
-                    <td class="p-3 text-center font-sans">
-                        <div class="flex items-center justify-center gap-1.5">
+                    <td class="p-3 text-left font-sans">
+                        <div class="flex items-center justify-start gap-1.5">
                             ${itemStatus !== 'SUCCESS' ? `<button onclick="approveTransaction('${pseudoTxId}')" class="text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-1 rounded text-[10px] font-bold transition-all" title="Manually approve this transaction"><i class="fa-solid fa-check"></i> Approve</button>` : ''}
                             ${itemStatus === 'PENDING' ? `<button onclick="rejectTransaction('${pseudoTxId}')" class="text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2 py-1 rounded text-[10px] font-bold transition-all" title="Manually reject this pending transaction"><i class="fa-solid fa-ban"></i> Reject</button>` : ''}
                             <button onclick="resendTransactionToB2C('${pseudoTxId}')" class="text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-1 rounded text-[10px] font-bold transition-all" title="Resend transaction result to the B2C platform"><i class="fa-solid fa-paper-plane"></i> Resend</button>
@@ -2459,24 +2792,24 @@
 
         // CSV 資料導出
         function exportReportToCSV() {
+            clampReportDateRange();
             const dateStart = document.getElementById('report-start-date').value;
             const dateEnd = document.getElementById('report-end-date').value;
             const sysId = document.getElementById('report-merchant-id').value;
-            const site = document.getElementById('report-site').value;
+            const selectedSites = getSelectedReportSites();
             const Method = document.getElementById('report-Method').value;
             const gateway = document.getElementById('report-gateway').value;
             const type = document.getElementById('report-type').value;
             const status = document.getElementById('report-status').value;
             const notifyStatus = document.getElementById('report-notify-status').value;
             const txIdInput = document.getElementById('report-txid').value.trim().toLowerCase();
-            const groupInput = document.getElementById('report-group').value.trim().toLowerCase();
 
             const filtered = merchantReportData.filter(item => {
                 const itemDate = item.date.split(' ')[0];
                 const matchStart = dateStart ? itemDate >= dateStart : true;
                 const matchEnd = dateEnd ? itemDate <= dateEnd : true;
                 const matchSysId = sysId === 'All' ? true : item.sysId === sysId;
-                const matchSite = site === 'All' ? true : item.site === site;
+                const matchSite = selectedSites.length === 0 ? true : selectedSites.includes(item.site);
                 const matchMethod = Method === 'All' ? true : item.Method === Method;
                 const matchGateway = gateway === 'All' ? true : item.gateway === gateway;
                 const matchType = type === 'All' ? true : item.type === type;
@@ -2493,10 +2826,10 @@
                 const matchNotifyStatus = notifyStatus === 'All' ? true : item.notifyStatus === notifyStatus;
 
                 const pseudoTxId = getTransactionId(item).toLowerCase();
-                const matchTxId = txIdInput ? pseudoTxId.includes(txIdInput) : true;
-                const matchGroup = groupInput ? item.groupName.toLowerCase().includes(groupInput) : true;
+                const clientTxId = getClientTransId(item).toLowerCase();
+                const matchTxId = txIdInput ? (pseudoTxId.includes(txIdInput) || clientTxId.includes(txIdInput)) : true;
 
-                return matchStart && matchEnd && matchSysId && matchSite && matchMethod && matchGateway && matchType && matchStatus && matchNotifyStatus && matchTxId && matchGroup;
+                return matchStart && matchEnd && matchSysId && matchSite && matchMethod && matchGateway && matchType && matchStatus && matchNotifyStatus && matchTxId;
             });
 
             if (filtered.length === 0) {
@@ -2505,9 +2838,10 @@
             }
 
             let csvContent = "﻿"; // UTF-8 BOM
-            csvContent += "Date/Time,Tx ID,Site,Method,Payment Hub Strategy Group,Merchant ID,Gateway,Group,Channel,Settlement Amount,Currency,Channel Fee,Status,B2C Status Status\n";
+            csvContent += "Date/Time,Our Tx ID,Client Tx ID,Site,Method,Payment Hub Strategy Group,Merchant ID,Gateway,Group,Channel,Settlement Amount,Currency,Channel Fee,Status,Client Status\n";
             filtered.forEach(item => {
                 const pseudoTxId = getTransactionId(item);
+                const clientTxId = getClientTransId(item);
                 let itemStatus = 'PENDING';
                 if (item.isRejected) itemStatus = 'REJECTED';
                 else if (item.status === 'Pending') itemStatus = 'PENDING';
@@ -2515,8 +2849,9 @@
                 else itemStatus = 'FAILED';
 
                 const safeTxId = `'${pseudoTxId}`;
+                const safeClientTxId = `'${clientTxId}`;
                 const safeMethod = item.Method === 'Deposit' ? 'Deposit' : 'Withdrawal';
-                csvContent += `"${item.date}","${safeTxId}","${item.site}","${safeMethod}","${item.groupName}","${item.sysId}","${item.gateway}","${item.type}","${item.channel}",${item.successAmount},"${item.currency}",${item.fee},"${itemStatus}","${item.notifyStatus}"\n`;
+                csvContent += `"${item.date}","${safeTxId}","${safeClientTxId}","${item.site}","${safeMethod}","${item.groupName}","${item.sysId}","${item.gateway}","${item.type}","${item.channel}",${item.successAmount},"${item.currency}",${item.fee},"${itemStatus}","${item.notifyStatus}"\n`;
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -2532,6 +2867,151 @@
             alertSimulator("📥 CSV report exported successfully!");
         }
 
+        // === 6b. 對帳報表 (Tab 5b / wf-reconcile) — 從 Merchant Operator 拆出的獨立唯讀報表 ===
+        // 共用同一份 merchantReportData，只是換一組欄位／篩選條件呈現，避免另外維護一份假資料
+
+        function getReconcileSelectedSites() {
+            return ['12bet', 'nova', 'bwing']
+                .filter(s => document.getElementById(`reconcile-site-${s}`).checked)
+                .map(s => s === '12bet' ? '12bet' : s.charAt(0).toUpperCase() + s.slice(1));
+        }
+
+        function filterReconcileData() {
+            clampReconcileDateRange();
+            const dateStart = document.getElementById('reconcile-start-date').value;
+            const dateEnd = document.getElementById('reconcile-end-date').value;
+            const sysId = document.getElementById('reconcile-merchant-id').value;
+            const selectedSites = getReconcileSelectedSites();
+            const gateway = document.getElementById('reconcile-gateway').value;
+            const currency = document.getElementById('reconcile-currency').value;
+            const status = document.getElementById('reconcile-status').value;
+            const txIdInput = document.getElementById('reconcile-txid').value.trim().toLowerCase();
+
+            return merchantReportData.filter(item => {
+                const itemDate = item.date.split(' ')[0];
+                const matchStart = dateStart ? itemDate >= dateStart : true;
+                const matchEnd = dateEnd ? itemDate <= dateEnd : true;
+                const matchSysId = sysId === 'All' ? true : item.sysId === sysId;
+                const matchSite = selectedSites.length === 0 ? true : selectedSites.includes(item.site);
+                const matchGateway = gateway === 'All' ? true : item.gateway === gateway;
+                const matchCurrency = currency === 'All' ? true : item.currency === currency;
+
+                let matchStatus = true;
+                if (status !== 'All') {
+                    if (status === 'REJECTED') {
+                        matchStatus = item.isRejected === true;
+                    } else {
+                        matchStatus = item.isRejected !== true && (
+                            (status === 'SUCCESS' && item.successCount > 0) ||
+                            (status === 'FAILED' && item.failedCount > 0) ||
+                            (status === 'PENDING' && item.status === 'Pending')
+                        );
+                    }
+                }
+
+                const ourTxId = getTransactionId(item).toLowerCase();
+                const tpTxId = getThirdPartyTransId(item).toLowerCase();
+                const matchTxId = txIdInput ? (ourTxId.includes(txIdInput) || tpTxId.includes(txIdInput)) : true;
+
+                return matchStart && matchEnd && matchSysId && matchSite && matchGateway && matchCurrency && matchStatus && matchTxId;
+            });
+        }
+
+        function reconcileItemStatus(item) {
+            if (item.isRejected) return 'REJECTED';
+            if (item.status === 'Pending') return 'PENDING';
+            return item.successCount > 0 ? 'SUCCESS' : 'FAILED';
+        }
+
+        // 畫面固定為彙總呈現，不列出逐筆交易——資料量大時逐筆攤開不可行，逐筆資料一律走 Export CSV
+        let reconcileFilteredData = [];
+
+        function handleReconcileSearch() {
+            reconcileFilteredData = filterReconcileData();
+            document.getElementById('reconcile-total-count').innerText = reconcileFilteredData.length;
+            renderReconcileSummary();
+            alertSimulator(`🔍 已篩選出 ${reconcileFilteredData.length} 筆交易，彙總完成`);
+        }
+
+        const RECONCILE_GROUP_KEY_MAP = { Site: 'site', Merchant: 'sysId', Currency: 'currency', Gateway: 'gateway' };
+        const RECONCILE_GROUP_LABEL_MAP = { Site: 'Site', Merchant: 'Merchant ID', Currency: 'Currency', Gateway: 'Gateway' };
+
+        // 依「Group By 維度 + 幣別」兩層彙總，避免把不同幣別的金額誤加在一起；非 SUCCESS 的筆數獨立列出方便抓異常
+        function renderReconcileSummary() {
+            const tbody = document.getElementById('reconcile-table-body');
+            const groupCountEl = document.getElementById('reconcile-group-count');
+            if (!tbody) return;
+
+            const groupBy = document.getElementById('reconcile-groupby').value;
+            const headerEl = document.getElementById('reconcile-group-col-header');
+            if (headerEl) headerEl.innerText = RECONCILE_GROUP_LABEL_MAP[groupBy];
+
+            if (reconcileFilteredData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400 text-sm italic">查無符合條件之對帳資料</td></tr>`;
+                if (groupCountEl) groupCountEl.innerText = '0';
+                return;
+            }
+
+            const key = RECONCILE_GROUP_KEY_MAP[groupBy];
+            const buckets = new Map();
+            reconcileFilteredData.forEach(item => {
+                const groupVal = item[key];
+                const bucketKey = groupVal + '::' + item.currency;
+                if (!buckets.has(bucketKey)) buckets.set(bucketKey, { groupVal, currency: item.currency, count: 0, amount: 0, fee: 0, exceptions: 0 });
+                const b = buckets.get(bucketKey);
+                b.count += 1;
+                b.amount += item.successAmount;
+                b.fee += item.fee;
+                if (reconcileItemStatus(item) !== 'SUCCESS') b.exceptions += 1;
+            });
+
+            const rows = [...buckets.values()].sort((a, b) => a.groupVal.localeCompare(b.groupVal) || a.currency.localeCompare(b.currency));
+
+            tbody.innerHTML = rows.map(b => `
+                <tr class="hover:bg-slate-50 transition-colors text-sm">
+                    <td class="p-3 font-bold text-slate-800">${b.groupVal}</td>
+                    <td class="p-3 text-center font-bold text-slate-600">${b.currency}</td>
+                    <td class="p-3 text-right font-mono text-slate-700">${b.count}</td>
+                    <td class="p-3 text-right font-bold text-slate-900">${b.amount.toLocaleString()}</td>
+                    <td class="p-3 text-right text-rose-600">$${b.fee.toLocaleString()}</td>
+                    <td class="p-3 text-center">${b.exceptions > 0
+                        ? `<span class="bg-amber-100 text-amber-800 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-triangle-exclamation"></i> ${b.exceptions} 筆非成功</span>`
+                        : `<span class="text-emerald-600 text-xs">—</span>`}</td>
+                </tr>
+            `).join('');
+
+            if (groupCountEl) groupCountEl.innerText = rows.length;
+        }
+
+        // CSV 匯出：同時帶出我方／三方交易編號與結算日，讓 client 端、三方端可以分別拿去比對
+        function exportReconcileToCSV() {
+            const filtered = filterReconcileData();
+            if (filtered.length === 0) {
+                alertSimulator("❌ No data available to export.");
+                return;
+            }
+
+            let csvContent = "﻿"; // UTF-8 BOM
+            csvContent += "Date/Time,Our Tx ID,Third-Party Tx ID,Settlement Date,Site,Merchant ID,Gateway,Currency,Amount,Fee,Status\n";
+            filtered.forEach(item => {
+                const itemStatus = reconcileItemStatus(item);
+                const safeOurTxId = `'${getTransactionId(item)}`;
+                const safeTpTxId = `'${getThirdPartyTransId(item)}`;
+                csvContent += `"${item.date}","${safeOurTxId}","${safeTpTxId}","${getSettleDate(item)}","${item.site}","${item.sysId}","${item.gateway}","${item.currency}",${item.successAmount},${item.fee},"${itemStatus}"\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `reconciliation_report_${new Date().toISOString().slice(0,10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            alertSimulator("📥 對帳報表已匯出！");
+        }
 
         // === 7. 智慧分群與渠道對應核心邏輯 (Tab 3) ===
 
@@ -2771,12 +3251,15 @@
 
             channelsToRender.forEach((item) => {
                 const chan = item.chan;
+                const active = isChannelActiveOnSite(chan, rg.site);
+                const staleBadge = active ? '' : `<div class="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-1 mt-1.5 leading-snug"><i class="fa-solid fa-triangle-exclamation"></i> 商戶 ${chan.sysMerchant} 已不指派 ${rg.site}，此渠道在本站點暫時失效（路由時會跳過）。設定保留，可自行決定是否移除。</div>`;
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition-colors';
+                tr.className = active ? 'hover:bg-slate-50 transition-colors' : 'bg-amber-50/40 hover:bg-amber-50 transition-colors';
                 tr.innerHTML = `
                     <td class="p-3">
-                        <div class="font-bold text-slate-700 flex items-center gap-1.5"><span class="bg-blue-100 text-blue-800 text-[9px] px-1.5 py-0.5 rounded uppercase font-mono font-bold">${chan.type}</span><span>${chan.gateway}</span></div>
+                        <div class="font-bold ${active ? 'text-slate-700' : 'text-slate-400 line-through'} flex items-center gap-1.5"><span class="bg-blue-100 text-blue-800 text-[9px] px-1.5 py-0.5 rounded uppercase font-mono font-bold">${chan.type}</span><span>${chan.gateway}</span></div>
                         <div class="text-[10px] text-slate-400 font-mono mt-0.5">商戶: ${chan.sysMerchant} | 基準: $${chan.min} ~ $${chan.max} | 費率: ${chan.chargeFee}%</div>
+                        ${staleBadge}
                     </td>
                     <td class="p-3 text-center">
                         <button type="button" onclick="removeChannelFromGroup(${chan.id})" class="text-slate-400 hover:text-rose-600 transition-colors p-1 text-sm"><i class="fa-solid fa-trash-can"></i></button>
@@ -3216,9 +3699,19 @@
 
             steps.push({ title: 'Step 3 · 對應 Payment Hub Group', body: `Tag <b>${simulatedB2CResult.tag}</b> 對應到 Group：<b class="text-blue-700">${matchedGroup.aliasName}</b>` });
 
-            const candidates = matchedGroup.assignedChannels
+            const groupChannels = matchedGroup.assignedChannels
                 .map(ac => channelData.find(c => c.id === ac.channelId))
                 .filter(c => c && c.status && c.currency === member.currency);
+            const staleOnSite = groupChannels.filter(c => !isChannelActiveOnSite(c, member.site));
+            const candidates = groupChannels.filter(c => isChannelActiveOnSite(c, member.site));
+
+            if (staleOnSite.length > 0) {
+                steps.push({
+                    title: 'Step 3b · 站點可用性檢查',
+                    body: staleOnSite.map(c => `⚠️ ${c.gateway}（${c.channel}）— 所屬商戶 ${c.sysMerchant} 已不指派 ${member.site}，本次跳過（群組設定仍保留）`).join('<br>')
+                });
+            }
+
             const eligible = candidates.filter(c => simAmount >= c.min && simAmount <= c.max);
 
             steps.push({
@@ -3239,10 +3732,10 @@
                 const hasShift = ranked.some(c => c.shiftRank !== null);
                 const winner = hasShift
                     ? [...ranked].sort((a, b) => (a.shiftRank ?? 999) - (b.shiftRank ?? 999))[0]
-                    : [...ranked].sort((a, b) => (a.matchPriority ?? 999) - (b.matchPriority ?? 999))[0];
+                    : [...ranked].sort((a, b) => a.id - b.id)[0];
                 const reason = hasShift
                     ? `依 Payment Shift Setting 目前時段的優先順序（第 ${winner.shiftRank} 順位）決定`
-                    : `Payment Shift Setting 沒有設定這個組合的順序，改依 Merchant Channel Setting 的 Sort（matchPriority = ${winner.matchPriority}）決定`;
+                    : `⚠️ Payment Shift Setting 沒有設定這個組合的順序。原本 Merchant Channel Setting 的「Sort」已移除，目前暫以渠道建立順序（Channel ID = ${winner.id}）決定 — <b class="text-amber-700">此 fallback 規則待產品確認</b>`;
                 steps.push({
                     title: 'Step 5 · 最終決定走哪一間',
                     body: `✅ 實際走：<b class="text-emerald-700">${winner.gateway}（${winner.channel}）</b><br><span class="text-slate-500 text-[11px]">${reason}</span>`,
@@ -3986,11 +4479,14 @@
 
         // === 13. 全域初始化載入 ===
         window.onload = function() {
+            syncChannelSitesFromMerchant();
             syncChannelMappedGroups();
             renderMerchantTable(merchantData);
             handleChanTypeChange();
             switchTab('wf-merchant');
         };
     </script>
+
+
 </body>
 </html>
