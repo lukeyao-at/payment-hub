@@ -1796,9 +1796,7 @@
 
         // Client（站台）自己認的訂單編號：demo 情境下用站台代碼 + 時間戳模擬，實際串接時應改讀 Client 端下單/callback 帶來的原始單號
         function getClientTransId(item) {
-            const prefixMap = { 'OT': 'BET12', 'NV': 'NOVA', 'BW': 'BWNG' };
-            const prefix = prefixMap[item.site] || 'CLI';
-            return prefix + '-' + item.date.replace(/[^0-9]/g, '');
+            return (item.site || 'CLI') + '-' + item.date.replace(/[^0-9]/g, '');
         }
 
         // 結算日：僅實際入帳成功（非 Pending / 非 Rejected）的交易才有結算日，demo 以 T+1 模擬
