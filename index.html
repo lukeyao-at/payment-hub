@@ -1372,12 +1372,19 @@
                             <table class="w-full text-left text-sm whitespace-nowrap">
                                 <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
                                     <tr>
-                                        <th class="p-3" id="reconcile-group-col-header">Site</th>
-                                        <th class="p-3 text-center">Currency</th>
-                                        <th class="p-3 text-right">Txn Count</th>
-                                        <th class="p-3 text-right">Total Amount</th>
-                                        <th class="p-3 text-right">Total Fee (Est.)</th>
-                                        <th class="p-3 text-center">Exceptions</th>
+                                        <th class="p-3" rowspan="2" id="reconcile-group-col-header">Site</th>
+                                        <th class="p-3 text-center" rowspan="2">Currency</th>
+                                        <th class="p-3 text-center bg-emerald-50/60 text-emerald-800" colspan="3">Deposit（代收／進）</th>
+                                        <th class="p-3 text-center bg-rose-50/60 text-rose-800" colspan="3">Withdrawal（代付／出）</th>
+                                        <th class="p-3 text-center" rowspan="2">Exceptions</th>
+                                    </tr>
+                                    <tr>
+                                        <th class="p-3 text-right bg-emerald-50/60 text-emerald-800 font-normal">Count</th>
+                                        <th class="p-3 text-right bg-emerald-50/60 text-emerald-800 font-normal">Amount</th>
+                                        <th class="p-3 text-right bg-emerald-50/60 text-emerald-800 font-normal">Fee (Est.)</th>
+                                        <th class="p-3 text-right bg-rose-50/60 text-rose-800 font-normal">Count</th>
+                                        <th class="p-3 text-right bg-rose-50/60 text-rose-800 font-normal">Amount</th>
+                                        <th class="p-3 text-right bg-rose-50/60 text-rose-800 font-normal">Fee (Est.)</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100" id="reconcile-table-body">
@@ -2955,21 +2962,29 @@
             if (headerEl) headerEl.innerText = RECONCILE_GROUP_LABEL_MAP[groupBy];
 
             if (reconcileFilteredData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400 text-sm italic">查無符合條件之對帳資料</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-slate-400 text-sm italic">查無符合條件之對帳資料</td></tr>`;
                 if (groupCountEl) groupCountEl.innerText = '0';
                 return;
             }
 
+            // 進（Deposit）跟出（Withdrawal）分開累計，避免兩種現金流方向的金額被混在一起加總
             const key = RECONCILE_GROUP_KEY_MAP[groupBy];
             const buckets = new Map();
             reconcileFilteredData.forEach(item => {
                 const groupVal = item[key];
                 const bucketKey = groupVal + '::' + item.currency;
-                if (!buckets.has(bucketKey)) buckets.set(bucketKey, { groupVal, currency: item.currency, count: 0, amount: 0, fee: 0, exceptions: 0 });
+                if (!buckets.has(bucketKey)) {
+                    buckets.set(bucketKey, {
+                        groupVal, currency: item.currency, exceptions: 0,
+                        deposit: { count: 0, amount: 0, fee: 0 },
+                        withdrawal: { count: 0, amount: 0, fee: 0 }
+                    });
+                }
                 const b = buckets.get(bucketKey);
-                b.count += 1;
-                b.amount += item.successAmount;
-                b.fee += item.fee;
+                const side = item.Method === 'Withdrawal' ? b.withdrawal : b.deposit;
+                side.count += 1;
+                side.amount += item.successAmount;
+                side.fee += item.fee;
                 if (reconcileItemStatus(item) !== 'SUCCESS') b.exceptions += 1;
             });
 
@@ -2979,9 +2994,12 @@
                 <tr class="hover:bg-slate-50 transition-colors text-sm">
                     <td class="p-3 font-bold text-slate-800">${b.groupVal}</td>
                     <td class="p-3 text-center font-bold text-slate-600">${b.currency}</td>
-                    <td class="p-3 text-right font-mono text-slate-700">${b.count}</td>
-                    <td class="p-3 text-right font-bold text-slate-900">${b.amount.toLocaleString()}</td>
-                    <td class="p-3 text-right text-rose-600">$${b.fee.toLocaleString()}</td>
+                    <td class="p-3 text-right font-mono text-slate-700">${b.deposit.count}</td>
+                    <td class="p-3 text-right font-bold text-slate-900">${b.deposit.amount.toLocaleString()}</td>
+                    <td class="p-3 text-right text-rose-600">$${b.deposit.fee.toLocaleString()}</td>
+                    <td class="p-3 text-right font-mono text-slate-700">${b.withdrawal.count}</td>
+                    <td class="p-3 text-right font-bold text-slate-900">${b.withdrawal.amount.toLocaleString()}</td>
+                    <td class="p-3 text-right text-rose-600">$${b.withdrawal.fee.toLocaleString()}</td>
                     <td class="p-3 text-center">${b.exceptions > 0
                         ? `<span class="bg-amber-100 text-amber-800 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-triangle-exclamation"></i> ${b.exceptions} 筆非成功</span>`
                         : `<span class="text-emerald-600 text-xs">—</span>`}</td>
