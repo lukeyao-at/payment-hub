@@ -45,6 +45,16 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+
+        /* 整體文字放大一級：畫面大量使用 Tailwind 的小字級 utility，直接覆寫比逐一改 class 可靠 */
+        .text-\[9px\] { font-size: 10px !important; }
+        .text-\[10px\] { font-size: 11px !important; }
+        .text-\[11px\] { font-size: 12px !important; }
+        .text-xs { font-size: 13px !important; line-height: 1.15rem !important; }
+        .text-sm { font-size: 15px !important; line-height: 1.4rem !important; }
+        .text-base { font-size: 17px !important; line-height: 1.6rem !important; }
+        .text-lg { font-size: 19px !important; line-height: 1.75rem !important; }
+        .text-xl { font-size: 21px !important; line-height: 1.85rem !important; }
     </style>
 </head>
 <body class="text-slate-800 h-screen flex overflow-hidden">
