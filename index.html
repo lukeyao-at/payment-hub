@@ -2975,7 +2975,7 @@
                 const bucketKey = groupVal + '::' + item.currency;
                 if (!buckets.has(bucketKey)) {
                     buckets.set(bucketKey, {
-                        groupVal, currency: item.currency, exceptions: 0,
+                        groupVal, currency: item.currency, gateway: item.gateway, exceptions: 0,
                         deposit: { count: 0, amount: 0, fee: 0 },
                         withdrawal: { count: 0, amount: 0, fee: 0 }
                     });
@@ -2992,7 +2992,7 @@
 
             tbody.innerHTML = rows.map(b => `
                 <tr class="hover:bg-slate-50 transition-colors text-sm">
-                    <td class="p-3 font-bold text-slate-800">${b.groupVal}</td>
+                    <td class="p-3 font-bold text-slate-800">${b.groupVal}${groupBy === 'Merchant' ? ` <span class="text-slate-400 font-normal text-xs">(${b.gateway})</span>` : ''}</td>
                     <td class="p-3 text-center font-bold text-slate-600">${b.currency}</td>
                     <td class="p-3 text-right font-mono text-slate-700">${b.deposit.count}</td>
                     <td class="p-3 text-right font-bold text-slate-900">${b.deposit.amount.toLocaleString()}</td>
