@@ -1343,10 +1343,6 @@
                                 <option value="REJECTED">REJECTED</option>
                             </select>
                         </div>
-                        <div class="w-48">
-                            <label class="block text-xs font-bold text-slate-500 mb-1.5">Tx ID（我方／三方皆可查）</label>
-                            <input type="text" id="reconcile-txid" placeholder="Search by either Tx ID..." class="w-full border border-slate-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 transition-all">
-                        </div>
                         <div class="w-40">
                             <label class="block text-xs font-bold text-slate-500 mb-1.5" title="畫面固定為彙總呈現，此欄位決定要依哪個維度彙總">Group By（必選）</label>
                             <select id="reconcile-groupby" onchange="handleReconcileSearch()" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-brand-500 shadow-sm">
@@ -1374,17 +1370,19 @@
                                     <tr>
                                         <th class="p-3" rowspan="2" id="reconcile-group-col-header">Site</th>
                                         <th class="p-3 text-center" rowspan="2">Currency</th>
-                                        <th class="p-3 text-center bg-emerald-50/60 text-emerald-800" colspan="3">Deposit（代收／進）</th>
-                                        <th class="p-3 text-center bg-rose-50/60 text-rose-800" colspan="3">Withdrawal（代付／出）</th>
-                                        <th class="p-3 text-center" rowspan="2">Exceptions</th>
+                                        <th class="p-3 text-center bg-emerald-50/60 text-emerald-800" colspan="4">Deposit（代收／進）</th>
+                                        <th class="p-3 text-center bg-rose-50/60 text-rose-800" colspan="4">Withdrawal（代付／出）</th>
+                                        <th class="p-3 text-center" rowspan="2" title="尚未結算的 Pending 筆數（成功金額不含這些筆數）">Pending</th>
                                     </tr>
                                     <tr>
                                         <th class="p-3 text-right bg-emerald-50/60 text-emerald-800 font-normal">Count</th>
                                         <th class="p-3 text-right bg-emerald-50/60 text-emerald-800 font-normal">Amount</th>
                                         <th class="p-3 text-right bg-emerald-50/60 text-emerald-800 font-normal">Fee (Est.)</th>
+                                        <th class="p-3 text-right bg-emerald-50/60 text-emerald-800 font-normal" title="Amount − Fee">Net</th>
                                         <th class="p-3 text-right bg-rose-50/60 text-rose-800 font-normal">Count</th>
                                         <th class="p-3 text-right bg-rose-50/60 text-rose-800 font-normal">Amount</th>
                                         <th class="p-3 text-right bg-rose-50/60 text-rose-800 font-normal">Fee (Est.)</th>
+                                        <th class="p-3 text-right bg-rose-50/60 text-rose-800 font-normal" title="Amount − Fee">Net</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100" id="reconcile-table-body">
@@ -1804,22 +1802,9 @@
             return prefix + numericPart;
         }
 
-        // 三方端自己認的交易編號（對帳用）：demo 情境下用 Gateway 前綴 + 時間戳模擬，實際串接時應改讀三方 callback 回傳的原始單號
-        function getThirdPartyTransId(item) {
-            const prefixMap = { KPay: 'KP', PayHelper: 'PH', Help2Pay: 'H2P', AsiaTrust: 'AT' };
-            const prefix = prefixMap[item.gateway] || 'TP';
-            return prefix + '-' + item.date.replace(/[^0-9]/g, '');
-        }
-
         // Client（站台）自己認的訂單編號：demo 情境下用站台代碼 + 時間戳模擬，實際串接時應改讀 Client 端下單/callback 帶來的原始單號
         function getClientTransId(item) {
             return (item.site || 'CLI') + '-' + item.date.replace(/[^0-9]/g, '');
-        }
-
-        // 結算日：僅實際入帳成功（非 Pending / 非 Rejected）的交易才有結算日，demo 以 T+1 模擬
-        function getSettleDate(item) {
-            const isSettled = !item.isRejected && item.status !== 'Pending' && item.successCount > 0;
-            return isSettled ? reportAddDays(item.date.split(' ')[0], 1) : '-';
         }
 
         // 系統訊息通知氣泡提示
@@ -2900,7 +2885,6 @@
             const gateway = document.getElementById('reconcile-gateway').value;
             const currency = document.getElementById('reconcile-currency').value;
             const status = document.getElementById('reconcile-status').value;
-            const txIdInput = document.getElementById('reconcile-txid').value.trim().toLowerCase();
 
             return merchantReportData.filter(item => {
                 const itemDate = item.date.split(' ')[0];
@@ -2924,11 +2908,7 @@
                     }
                 }
 
-                const ourTxId = getTransactionId(item).toLowerCase();
-                const tpTxId = getThirdPartyTransId(item).toLowerCase();
-                const matchTxId = txIdInput ? (ourTxId.includes(txIdInput) || tpTxId.includes(txIdInput)) : true;
-
-                return matchStart && matchEnd && matchSysId && matchSite && matchGateway && matchCurrency && matchStatus && matchTxId;
+                return matchStart && matchEnd && matchSysId && matchSite && matchGateway && matchCurrency && matchStatus;
             });
         }
 
@@ -2951,7 +2931,34 @@
         const RECONCILE_GROUP_KEY_MAP = { Site: 'site', Merchant: 'sysId', Currency: 'currency', Gateway: 'gateway' };
         const RECONCILE_GROUP_LABEL_MAP = { Site: 'Site', Merchant: 'Merchant ID', Currency: 'Currency', Gateway: 'Gateway' };
 
-        // 依「Group By 維度 + 幣別」兩層彙總，避免把不同幣別的金額誤加在一起；非 SUCCESS 的筆數獨立列出方便抓異常
+        // 依「Group By 維度 + 幣別」兩層彙總，避免把不同幣別的金額誤加在一起
+        // 進（Deposit）跟出（Withdrawal）分開累計；Count/Amount/Fee/Net 只計 SUCCESS，尚未結算的 Pending 另列一欄
+        function buildReconcileSummaryRows() {
+            const groupBy = document.getElementById('reconcile-groupby').value;
+            const key = RECONCILE_GROUP_KEY_MAP[groupBy];
+            const buckets = new Map();
+            reconcileFilteredData.forEach(item => {
+                const groupVal = item[key];
+                const bucketKey = groupVal + '::' + item.currency;
+                if (!buckets.has(bucketKey)) {
+                    buckets.set(bucketKey, {
+                        groupVal, currency: item.currency, gateway: item.gateway, pending: 0,
+                        deposit: { count: 0, amount: 0, fee: 0 },
+                        withdrawal: { count: 0, amount: 0, fee: 0 }
+                    });
+                }
+                const b = buckets.get(bucketKey);
+                const itemStatus = reconcileItemStatus(item);
+                if (itemStatus === 'PENDING') b.pending += 1;
+                if (itemStatus !== 'SUCCESS') return;
+                const side = item.Method === 'Withdrawal' ? b.withdrawal : b.deposit;
+                side.count += 1;
+                side.amount += item.successAmount;
+                side.fee += item.fee;
+            });
+            return [...buckets.values()].sort((a, b) => a.groupVal.localeCompare(b.groupVal) || a.currency.localeCompare(b.currency));
+        }
+
         function renderReconcileSummary() {
             const tbody = document.getElementById('reconcile-table-body');
             const groupCountEl = document.getElementById('reconcile-group-count');
@@ -2962,81 +2969,63 @@
             if (headerEl) headerEl.innerText = RECONCILE_GROUP_LABEL_MAP[groupBy];
 
             if (reconcileFilteredData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-slate-400 text-sm italic">查無符合條件之對帳資料</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="11" class="p-8 text-center text-slate-400 text-sm italic">查無符合條件之對帳資料</td></tr>`;
                 if (groupCountEl) groupCountEl.innerText = '0';
                 return;
             }
 
-            // 進（Deposit）跟出（Withdrawal）分開累計，避免兩種現金流方向的金額被混在一起加總
-            const key = RECONCILE_GROUP_KEY_MAP[groupBy];
-            const buckets = new Map();
-            reconcileFilteredData.forEach(item => {
-                const groupVal = item[key];
-                const bucketKey = groupVal + '::' + item.currency;
-                if (!buckets.has(bucketKey)) {
-                    buckets.set(bucketKey, {
-                        groupVal, currency: item.currency, gateway: item.gateway, exceptions: 0,
-                        deposit: { count: 0, amount: 0, fee: 0 },
-                        withdrawal: { count: 0, amount: 0, fee: 0 }
-                    });
-                }
-                const b = buckets.get(bucketKey);
-                const side = item.Method === 'Withdrawal' ? b.withdrawal : b.deposit;
-                side.count += 1;
-                side.amount += item.successAmount;
-                side.fee += item.fee;
-                if (reconcileItemStatus(item) !== 'SUCCESS') b.exceptions += 1;
-            });
-
-            const rows = [...buckets.values()].sort((a, b) => a.groupVal.localeCompare(b.groupVal) || a.currency.localeCompare(b.currency));
+            const rows = buildReconcileSummaryRows();
+            const sideCells = s => `
+                    <td class="p-3 text-right font-mono text-slate-700">${s.count}</td>
+                    <td class="p-3 text-right font-bold text-slate-900">${s.amount.toLocaleString()}</td>
+                    <td class="p-3 text-right text-rose-600">$${s.fee.toLocaleString()}</td>
+                    <td class="p-3 text-right font-bold text-blue-800">${(s.amount - s.fee).toLocaleString()}</td>`;
 
             tbody.innerHTML = rows.map(b => `
                 <tr class="hover:bg-slate-50 transition-colors text-sm">
                     <td class="p-3 font-bold text-slate-800">${b.groupVal}${groupBy === 'Merchant' ? ` <span class="text-slate-400 font-normal text-xs">(${b.gateway})</span>` : ''}</td>
-                    <td class="p-3 text-center font-bold text-slate-600">${b.currency}</td>
-                    <td class="p-3 text-right font-mono text-slate-700">${b.deposit.count}</td>
-                    <td class="p-3 text-right font-bold text-slate-900">${b.deposit.amount.toLocaleString()}</td>
-                    <td class="p-3 text-right text-rose-600">$${b.deposit.fee.toLocaleString()}</td>
-                    <td class="p-3 text-right font-mono text-slate-700">${b.withdrawal.count}</td>
-                    <td class="p-3 text-right font-bold text-slate-900">${b.withdrawal.amount.toLocaleString()}</td>
-                    <td class="p-3 text-right text-rose-600">$${b.withdrawal.fee.toLocaleString()}</td>
-                    <td class="p-3 text-center">${b.exceptions > 0
-                        ? `<span class="bg-amber-100 text-amber-800 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-triangle-exclamation"></i> ${b.exceptions} 筆非成功</span>`
-                        : `<span class="text-emerald-600 text-xs">—</span>`}</td>
+                    <td class="p-3 text-center font-bold text-slate-600">${b.currency}</td>${sideCells(b.deposit)}${sideCells(b.withdrawal)}
+                    <td class="p-3 text-center">${b.pending > 0
+                        ? `<span class="bg-amber-100 text-amber-800 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-spinner"></i> ${b.pending}</span>`
+                        : `<span class="text-slate-400 text-xs">—</span>`}</td>
                 </tr>
             `).join('');
 
             if (groupCountEl) groupCountEl.innerText = rows.length;
         }
 
-        // CSV 匯出：同時帶出我方／三方交易編號與結算日，讓 client 端、三方端可以分別拿去比對
+        // CSV 匯出：與畫面一致的彙總表（營運拿去跟三方人工核對用），不含逐筆明細
         function exportReconcileToCSV() {
             const filtered = filterReconcileData();
             if (filtered.length === 0) {
                 alertSimulator("❌ No data available to export.");
                 return;
             }
+            reconcileFilteredData = filtered;
+
+            const groupBy = document.getElementById('reconcile-groupby').value;
+            const startDate = document.getElementById('reconcile-start-date').value;
+            const endDate = document.getElementById('reconcile-end-date').value;
+            const rows = buildReconcileSummaryRows();
 
             let csvContent = "﻿"; // UTF-8 BOM
-            csvContent += "Date/Time,Our Tx ID,Third-Party Tx ID,Settlement Date,Site,Merchant ID,Gateway,Currency,Amount,Fee,Status\n";
-            filtered.forEach(item => {
-                const itemStatus = reconcileItemStatus(item);
-                const safeOurTxId = `'${getTransactionId(item)}`;
-                const safeTpTxId = `'${getThirdPartyTransId(item)}`;
-                csvContent += `"${item.date}","${safeOurTxId}","${safeTpTxId}","${getSettleDate(item)}","${item.site}","${item.sysId}","${item.gateway}","${item.currency}",${item.successAmount},${item.fee},"${itemStatus}"\n`;
+            csvContent += `Start Date,End Date,${RECONCILE_GROUP_LABEL_MAP[groupBy]},Gateway,Currency,Deposit Count,Deposit Amount,Deposit Fee,Deposit Net,Withdrawal Count,Withdrawal Amount,Withdrawal Fee,Withdrawal Net,Pending Count\n`;
+            rows.forEach(b => {
+                const gw = groupBy === 'Merchant' ? b.gateway : '';
+                csvContent += `"${startDate}","${endDate}","${b.groupVal}","${gw}","${b.currency}",${b.deposit.count},${b.deposit.amount},${b.deposit.fee},${b.deposit.amount - b.deposit.fee},${b.withdrawal.count},${b.withdrawal.amount},${b.withdrawal.fee},${b.withdrawal.amount - b.withdrawal.fee},${b.pending}\n`;
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.setAttribute("href", url);
-            link.setAttribute("download", `reconciliation_report_${new Date().toISOString().slice(0,10)}.csv`);
+            link.setAttribute("download", `reconciliation_summary_${new Date().toISOString().slice(0,10)}.csv`);
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
 
-            alertSimulator("📥 對帳報表已匯出！");
+            alertSimulator("📥 對帳彙總表已匯出！");
         }
 
         // === 7. 智慧分群與渠道對應核心邏輯 (Tab 3) ===
