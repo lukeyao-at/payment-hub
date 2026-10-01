@@ -1372,7 +1372,6 @@
                                         <th class="p-3 text-center" rowspan="2">Currency</th>
                                         <th class="p-3 text-center bg-emerald-50/60 text-emerald-800" colspan="4">Deposit（代收／進）</th>
                                         <th class="p-3 text-center bg-rose-50/60 text-rose-800" colspan="4">Withdrawal（代付／出）</th>
-                                        <th class="p-3 text-center" rowspan="2" title="尚未結算的 Pending 筆數（成功金額不含這些筆數）">Pending</th>
                                     </tr>
                                     <tr>
                                         <th class="p-3 text-right bg-emerald-50/60 text-emerald-800 font-normal">Count</th>
@@ -2932,7 +2931,7 @@
         const RECONCILE_GROUP_LABEL_MAP = { Site: 'Site', Merchant: 'Merchant ID', Currency: 'Currency', Gateway: 'Gateway' };
 
         // 依「Group By 維度 + 幣別」兩層彙總，避免把不同幣別的金額誤加在一起
-        // 進（Deposit）跟出（Withdrawal）分開累計；Count/Amount/Fee/Net 只計 SUCCESS，尚未結算的 Pending 另列一欄
+        // 進（Deposit）跟出（Withdrawal）分開累計；Count/Amount/Fee/Net 只計 SUCCESS（實際核准後才有金流行為）
         function buildReconcileSummaryRows() {
             const groupBy = document.getElementById('reconcile-groupby').value;
             const key = RECONCILE_GROUP_KEY_MAP[groupBy];
@@ -2942,15 +2941,13 @@
                 const bucketKey = groupVal + '::' + item.currency;
                 if (!buckets.has(bucketKey)) {
                     buckets.set(bucketKey, {
-                        groupVal, currency: item.currency, gateway: item.gateway, pending: 0,
+                        groupVal, currency: item.currency, gateway: item.gateway,
                         deposit: { count: 0, amount: 0, fee: 0 },
                         withdrawal: { count: 0, amount: 0, fee: 0 }
                     });
                 }
                 const b = buckets.get(bucketKey);
-                const itemStatus = reconcileItemStatus(item);
-                if (itemStatus === 'PENDING') b.pending += 1;
-                if (itemStatus !== 'SUCCESS') return;
+                if (reconcileItemStatus(item) !== 'SUCCESS') return;
                 const side = item.Method === 'Withdrawal' ? b.withdrawal : b.deposit;
                 side.count += 1;
                 side.amount += item.successAmount;
@@ -2969,7 +2966,7 @@
             if (headerEl) headerEl.innerText = RECONCILE_GROUP_LABEL_MAP[groupBy];
 
             if (reconcileFilteredData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="11" class="p-8 text-center text-slate-400 text-sm italic">查無符合條件之對帳資料</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-400 text-sm italic">查無符合條件之對帳資料</td></tr>`;
                 if (groupCountEl) groupCountEl.innerText = '0';
                 return;
             }
@@ -2985,9 +2982,6 @@
                 <tr class="hover:bg-slate-50 transition-colors text-sm">
                     <td class="p-3 font-bold text-slate-800">${b.groupVal}${groupBy === 'Merchant' ? ` <span class="text-slate-400 font-normal text-xs">(${b.gateway})</span>` : ''}</td>
                     <td class="p-3 text-center font-bold text-slate-600">${b.currency}</td>${sideCells(b.deposit)}${sideCells(b.withdrawal)}
-                    <td class="p-3 text-center">${b.pending > 0
-                        ? `<span class="bg-amber-100 text-amber-800 font-bold text-[10px] px-2 py-0.5 rounded-full"><i class="fa-solid fa-spinner"></i> ${b.pending}</span>`
-                        : `<span class="text-slate-400 text-xs">—</span>`}</td>
                 </tr>
             `).join('');
 
@@ -3009,10 +3003,10 @@
             const rows = buildReconcileSummaryRows();
 
             let csvContent = "﻿"; // UTF-8 BOM
-            csvContent += `Start Date,End Date,${RECONCILE_GROUP_LABEL_MAP[groupBy]},Gateway,Currency,Deposit Count,Deposit Amount,Deposit Fee,Deposit Net,Withdrawal Count,Withdrawal Amount,Withdrawal Fee,Withdrawal Net,Pending Count\n`;
+            csvContent += `Start Date,End Date,${RECONCILE_GROUP_LABEL_MAP[groupBy]},Gateway,Currency,Deposit Count,Deposit Amount,Deposit Fee,Deposit Net,Withdrawal Count,Withdrawal Amount,Withdrawal Fee,Withdrawal Net\n`;
             rows.forEach(b => {
                 const gw = groupBy === 'Merchant' ? b.gateway : '';
-                csvContent += `"${startDate}","${endDate}","${b.groupVal}","${gw}","${b.currency}",${b.deposit.count},${b.deposit.amount},${b.deposit.fee},${b.deposit.amount - b.deposit.fee},${b.withdrawal.count},${b.withdrawal.amount},${b.withdrawal.fee},${b.withdrawal.amount - b.withdrawal.fee},${b.pending}\n`;
+                csvContent += `"${startDate}","${endDate}","${b.groupVal}","${gw}","${b.currency}",${b.deposit.count},${b.deposit.amount},${b.deposit.fee},${b.deposit.amount - b.deposit.fee},${b.withdrawal.count},${b.withdrawal.amount},${b.withdrawal.fee},${b.withdrawal.amount - b.withdrawal.fee}\n`;
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
