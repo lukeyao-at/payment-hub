@@ -807,7 +807,8 @@
                                         <th class="p-3 text-center font-bold">Currency</th>
                                         <th class="p-3 text-right font-bold">Min Limit</th>
                                         <th class="p-3 text-right font-bold">Max Limit</th>
-                                        <th class="p-3 text-right font-bold">Fixed Fee</th>
+                                        <th class="p-3 text-right font-bold" title="百分比費率（Charge Fee %）">Fee (%)</th>
+                                        <th class="p-3 text-right font-bold" title="單筆固定費用（Per Count）">Fixed Fee</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100" id="channel-table-body">
@@ -2357,7 +2358,7 @@
             if (summary) summary.innerText = `Showing 1 to ${data.length} of ${channelData.length} entries`;
 
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="12" class="p-8 text-center text-slate-400 text-xs italic">查無符合條件之渠道資料</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="13" class="p-8 text-center text-slate-400 text-xs italic">查無符合條件之渠道資料</td></tr>`;
                 return;
             }
 
@@ -2386,6 +2387,7 @@
                     <td class="p-3 text-center font-bold">${c.currency}</td>
                     <td class="p-3 text-right font-mono">${c.min.toLocaleString()}</td>
                     <td class="p-3 text-right font-mono">${c.max.toLocaleString()}</td>
+                    <td class="p-3 text-right font-mono">${c.chargeFee.toFixed(2)}%</td>
                     <td class="p-3 text-right font-mono">${c.perCount.toFixed(2)}</td>
                 `;
                 tbody.appendChild(tr);
